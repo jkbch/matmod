@@ -1,4 +1,3 @@
-#packs
 import os
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,21 +8,18 @@ dir_path = "toyProblem_F22"
 img_paths = os.listdir(dir_path)
 img_paths.sort()
 
-img_list = []
+imgs2d = []
 for img_path in img_paths:
     img2d = si.io.imread(os.path.join(dir_path, img_path))
     img2d_gray = rgb2gray(img2d)
-    img2d_gray = si.img_as_ubyte(img2d_gray)
-    img_list.append(img2d_gray)
+    img2d_ubyte = si.img_as_ubyte(img2d_gray)
+    imgs2d.append(img2d_ubyte)
 
-img3d = np.stack(img_list,axis=2)
+img3d = np.stack(imgs2d,axis=2)
 
-### plot
 fig, ax = plt.subplots()
-
 for  i in range(64):
     ax.clear()
     ax.imshow(img3d[:,:,i],cmap = "gray")
-    # Note that using time.sleep does *not* work here!
     plt.pause(0.01)
 
