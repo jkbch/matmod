@@ -3,6 +3,7 @@ from skimage import io
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from scipy import ndimage
 
 from skimage import img_as_ubyte
 from skimage import img_as_float
@@ -26,8 +27,8 @@ dx=img3d[1:,:,:]-img3d[0:-1,:,:]
 dy=img3d[:,1:,:]-img3d[:,0:-1,:]
 dt=img3d[:,:,1:]-img3d[:,:,0:-1]
 
-
-
+#Gradiants with filter
+dx2=ndimage.prewitt(img3d[:,:,:], axis=0)
 
 
 ### plot
