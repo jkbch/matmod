@@ -2,39 +2,46 @@
 from skimage import io
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+import scipy
 
 from skimage import img_as_ubyte
 from skimage import img_as_float
 from skimage.color import rgb2gray
-
-import os
 from os import listdir
 
 
 #Indlæs 3darray med billeder
-path = "toyProblem_F22/"
+dir = "toyProblem_F22/"
+img_list=[]
 
-files = os.listdir(path)
-
-img_list = []
-
-print(files)
-for images in files:
-    img2d = io.imread(path + images)
+for images in os.listdir(dir):
+    img2d = io.imread(dir + images)
     img2d_gray = rgb2gray(img2d)
     img_list.append(img2d_gray)
 
 img3d = np.stack(img_list,axis=2)
 
-
+#Gradiants
+#dx=img3d[1:,:,:]-img3d[0:-1,:,:]
+#dy=img3d[:,1:,:]-img3d[:,0:-1,:]
+#dt=img3d[:,:,1:]-img3d[:,:,0:-1]
 
 
 ### plot
 fig, ax = plt.subplots()
 
+##### Original
 for  i in range(64):
     ax.clear()
     ax.imshow(img3d[:,:,i],cmap = "gray")
     # Note that using time.sleep does *not* work here!
     plt.pause(0.01)
+
+##### Gradient dx
+#for i in range(64):
+ #   ax.clear()
+  #  ax.imshow(dx[:,:,i],cmap="gray")
+   # plt.pause(0.01)
+
 
