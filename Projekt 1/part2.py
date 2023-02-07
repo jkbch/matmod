@@ -33,19 +33,23 @@ Vx = ndimage.prewitt(V, 0)
 Vy = ndimage.prewitt(V, 1)
 Vt = ndimage.prewitt(V, 2)
 
-sd = 2
-factor = 3
-px = np.arange(-factor*sd, factor*sd + 1)
+def Gaussian_Gradient_Filter(V, dim, sd, factor=2):
+    x = np.arange(-factor*sd, factor*sd + 1)
+    G = 1 / (np.sqrt(2 * np.pi * sd**2)) * np.exp(- x**2 / (2 * sd**2))
+    dG = -np.sqrt(2) * x * np.exp(-x**2 / 8) / (16 * np.sqrt(np.pi))
 
-def G(x):
-    return 1 / (np.sqrt(2 * np.pi * sd**2)) * np.exp(- x**2 / (2 * sd**2))
+    dV = V
+    for i in range(3):
+        if(i == dim):
+            dV = ndimage.convolve1d(dV, dG, i)
+        else:
+            dV = ndimage.convolve1d(dV, G, i)
 
-def dG(x):
-    return -np.sqrt(2) * x * np.exp(-x**2 / 8) / (16 * np.sqrt(np.pi))
+    return dV
 
-Vx = ndimage.convolve1d(ndimage.convolve1d(ndimage.convolve1d(V, dG(px), 0), G(px), 1), G(px), 2)
-Vy = ndimage.convolve1d(ndimage.convolve1d(ndimage.convolve1d(V, G(px), 0), dG(px), 1), G(px), 2)
-Vt = ndimage.convolve1d(ndimage.convolve1d(ndimage.convolve1d(V, G(px), 0), G(px), 1), dG(px), 2)
+Vx = Gaussian_Gradient_Filter(V, 0, 2)
+Vy = Gaussian_Gradient_Filter(V, 1, 2)
+Vt = Gaussian_Gradient_Filter(V, 2, 2)
 
 px, py, pt = 200, 220, 0
 radius = 2
@@ -59,5 +63,3 @@ b = -Vt[px_region, py_region, pt].flatten()
 (x, y), _, _, _ = np.linalg.lstsq(A, b, rcond=None)
 
 print(x, y)
-
-#plot(V_x)
