@@ -17,6 +17,10 @@ def plot(V):
         ax.imshow(V[:,:,i], cmap = "gray")
         plt.pause(0.01)
 
+#def gaus_gradiant_3d(V,simga)
+
+
+
 #Indlæs 3darray med billeder
 path = "toyProblem_F22/"
 
@@ -27,19 +31,29 @@ for images in os.listdir(path):
     img2d_gray = rgb2gray(img2d)
     img_list.append(img2d_gray)
 
-img3d = np.stack(img_list,axis=2)
+V = np.stack(img_list,axis=2)
 
 ## Gradient
 
-Vx = img3d[1:,:,:] - img3d[0:-1,:,:]
-Vy = img3d[:,1:,:] - img3d[:,0:-1,:]
-Vt = img3d[:,:,1:] - img3d[:,:,0:-1]
+Vx = V[1:,:,:] - V[0:-1,:,:]
+Vy = V[:,1:,:] - V[:,0:-1,:]
+Vt = V[:,:,1:] - V[:,:,0:-1]
 
 ## Filters
 # Sobel Kernel
-sobkern_img = scipy.ndimage.sobel(img3d)
+sobkern_img = scipy.ndimage.sobel(V)
 
+# Prewit kernel
+V_x = scipy.ndimage.prewitt(V, 0)
+V_y = scipy.ndimage.prewitt(V, 1)
+V_t = scipy.ndimage.prewitt(V, 2)
 
+# Gaussian gradiant filtering
+
+gauss_x = scipy.ndimage.gaussian_filter1d(V,sigma = 4, axis = 0, order = 0)
+gauss_xy = scipy.ndimage.gaussian_filter1d(gauss_x,sigma = 4, axis = 1, order = 0)
+gauss_xyt = scipy.ndimage.gaussian_filter1d(gauss_xy,sigma = 4, axis = 2, order = 1)
 ## Plot
-
-plot(sobkern_img)
+#plot(V)
+#plot(V_y)
+plot(gauss_xyt)
