@@ -45,12 +45,15 @@ sobkern_img = scipy.ndimage.sobel(img3d)
 
 #plot(sobkern_img)
 # %%
-num = random.randint(0,3)
+num = random.randint(0,2)
+print(num)
 vek = np.zeros(3)
-vek[num] = 1
-gaussgrad_img_x = scipy.ndimage.gaussian_filter1d(img3d, sigma = 4, axis = 0, order = vek[0])
-gaussgrad_img_xy = scipy.ndimage.gaussian_filter1d(gaussgrad_img_x, sigma = 4, axis = 1, order = vek[1])
-gaussgrad_img_xyt = scipy.ndimage.gaussian_filter1d(gaussgrad_img_xy, sigma = 3, axis = 2, order = vek[2])
+x = (num == 0) * 1 
+y = (num == 1) * 1
+t = (num == 2) * 1
+gaussgrad_img_x = scipy.ndimage.gaussian_filter1d(img3d, sigma = 4, axis = 0, order = x)
+gaussgrad_img_xy = scipy.ndimage.gaussian_filter1d(gaussgrad_img_x, sigma = 4, axis = 1, order = y)
+gaussgrad_img_xyt = scipy.ndimage.gaussian_filter1d(gaussgrad_img_xy, sigma = 3, axis = 2, order = t)
 #plot(img3d)
 plot(gaussgrad_img_xyt)
 # %%
