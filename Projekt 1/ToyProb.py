@@ -11,6 +11,7 @@ from skimage.color import rgb2gray
 from os import listdir
 
 
+
 #Indlæs 3darray med billeder
 dir = "toyProblem_F22/"
 img_list=[]
@@ -29,6 +30,15 @@ dt=img3d[:,:,1:]-img3d[:,:,0:-1]
 
 #Gradiants with filter
 dx2=ndimage.prewitt(img3d[:,:,:], axis=0)
+dy2=ndimage.prewitt(img3d[:,:,:], axis=1)
+dt2=ndimage.prewitt(img3d[:,:,:], axis=2)
+
+
+#Gauss filter 1D
+Gauss_y=ndimage.gaussian_filter1d(img3d,sigma=4, axis=1)
+Gauss_yt=ndimage.gaussian_filter1d(Gauss_y,sigma=4, axis=2)
+dx3=ndimage.gaussian_filter1d(Gauss_yt,sigma=4, axis=0, order=1)
+
 
 
 ### plot
@@ -37,12 +47,12 @@ fig, ax = plt.subplots()
 ##### Original
 for  i in range(64):
     ax.clear()
-    ax.imshow(img3d[:,:,i],cmap = "gray")
+    ax.imshow(dx2[:,:,i],cmap = "gray")
     # Note that using time.sleep does *not* work here!
     plt.pause(0.01)
 
 ##### Gradient dx
 for i in range(64):
     ax.clear()
-    ax.imshow(dx[:,:,i],cmap="gray")
+    ax.imshow(dx3[:,:,i],cmap="gray")
     plt.pause(0.01)
