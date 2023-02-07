@@ -1,11 +1,12 @@
 import os
+import math
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy
+from scipy import ndimage
 from skimage import io
 from skimage import color
 
-def plot(V):
+def video_plot(V):
     fig, ax = plt.subplots()
     for i in range(V.shape[-1]):
         ax.clear()
@@ -22,14 +23,41 @@ for img_path in img_paths:
     img_gray = color.rgb2gray(img)
     imgs.append(img_gray)
 
-V = np.stack(imgs,axis=2)
+V = np.stack(imgs, axis=2)
 
-V_x = V[1:,:,:] - V[0:-1,:,:]
-V_y = V[:,1:,:] - V[:,0:-1,:]
-V_t = V[:,:,1:] - V[:,:,0:-1]
+Vx = V[1:,:,:] - V[0:-1,:,:]
+Vy = V[:,1:,:] - V[:,0:-1,:]
+Vt = V[:,:,1:] - V[:,:,0:-1]
 
-V_x = scipy.ndimage.prewitt(V, 0)
-V_y = scipy.ndimage.prewitt(V, 1)
-V_t = scipy.ndimage.prewitt(V, 2)
+Vx = ndimage.prewitt(V, 0)
+Vy = ndimage.prewitt(V, 1)
+Vt = ndimage.prewitt(V, 2)
 
-plot(V_t)
+sd = 2
+factor = 3
+px = np.arange(-factor*sd, factor*sd + 1)
+
+def G(x):
+    return 1 / (np.sqrt(2 * np.pi * sd**2)) * np.exp(- x**2 / (2 * sd**2))
+
+def dG(x):
+    return -np.sqrt(2) * x * np.exp(-x**2 / 8) / (16 * np.sqrt(np.pi))
+
+Vx = ndimage.convolve1d(ndimage.convolve1d(ndimage.convolve1d(V, dG(px), 0), G(px), 1), G(px), 2)
+Vy = ndimage.convolve1d(ndimage.convolve1d(ndimage.convolve1d(V, G(px), 0), dG(px), 1), G(px), 2)
+Vt = ndimage.convolve1d(ndimage.convolve1d(ndimage.convolve1d(V, G(px), 0), G(px), 1), dG(px), 2)
+
+px, py, pt = 200, 220, 0
+radius = 2
+
+px_region = slice(px-radius, px+radius+1)
+py_region = slice(py-radius, py+radius+1)
+
+A = np.transpose(np.vstack((Vx[px_region, py_region, pt].flatten(), Vy[px_region, py_region, pt].flatten())))
+b = -Vt[px_region, py_region, pt].flatten()
+
+(x, y), _, _, _ = np.linalg.lstsq(A, b, rcond=None)
+
+print(x, y)
+
+#plot(V_x)
