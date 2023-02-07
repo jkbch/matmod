@@ -10,7 +10,12 @@ from skimage import img_as_float
 from skimage.color import rgb2gray
 from os import listdir
 
-
+def plot(V):
+    fig, ax = plt.subplots()
+    for i in range(V.shape[-1]):
+        ax.clear()
+        ax.imshow(V[:,:,i], cmap = "gray")
+        plt.pause(0.01)
 
 #Indlæs 3darray med billeder
 path = "toyProblem_F22/"
@@ -35,8 +40,6 @@ Vt = img3d[:,:,1:] - img3d[:,:,0:-1]
 sobkern_img = scipy.ndimage.sobel(img3d)
 
 
-fig, ax = plt.subplots()
-for  i in range(64):
-    ax.clear()
-    ax.imshow(Vx[:,:,i],cmap = "gray")
-    plt.pause(0.01)
+## Plot
+
+plot(sobkern_img)
