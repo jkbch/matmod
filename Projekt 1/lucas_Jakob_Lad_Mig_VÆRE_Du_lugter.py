@@ -46,6 +46,19 @@ sobkern_img = scipy.ndimage.sobel(img3d)
 
 #plot(sobkern_img)
 # %%
+<<<<<<< HEAD
+num = random.randint(0,2)
+print(num)
+vek = np.zeros(3)
+x = (num == 0) * 1 
+y = (num == 1) * 1
+t = (num == 2) * 1
+gaussgrad_img_x = scipy.ndimage.gaussian_filter1d(img3d, sigma = 4, axis = 0, order = x)
+gaussgrad_img_xy = scipy.ndimage.gaussian_filter1d(gaussgrad_img_x, sigma = 4, axis = 1, order = y)
+gaussgrad_img_xyt = scipy.ndimage.gaussian_filter1d(gaussgrad_img_xy, sigma = 3, axis = 2, order = t)
+#plot(img3d)
+plot(gaussgrad_img_xyt)
+=======
 V = img3d
 def Gaussian_Gradient_Filter(V, dim, sd, factor=2):
     x = np.arange(-factor*sd, factor*sd + 1)
@@ -87,16 +100,7 @@ pil = plt.quiver(*origin, x,y, color=['r'], scale=21)
 plt.savefig("draw_on_image_03.png")
 plt.show()
 
-#%% Hvad sker der hvis vi prøver på hele billedet?
-px, py, pt = 255, 255, 0
-radius = 2
-
-px_region = slice(px-radius, px+radius+1)
-py_region = slice(py-radius, py+radius+1)
-print(np.transpose(np.vstack((Vx[px_region, py_region, pt].flatten(), Vy[px_region, py_region, pt].flatten()))))
-
-
-
+#%% Hvad 
 # %%
 img3d_fucked = np.ones(np.shape(img3d))
 
