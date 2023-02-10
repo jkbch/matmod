@@ -63,5 +63,3 @@ b = -Vt[px_region, py_region, pt].flatten()
 (x, y), _, _, _ = np.linalg.lstsq(A, b, rcond=None)
 
 print(x, y)
-
-#plot(V_x)
