@@ -61,11 +61,12 @@ def Gaussian_Gradient_Filter(V, dim, sd, factor=2):
 
     return dV
 
-#%% Gausfiltre og løsning af Lucas-Kanade for ét koordinat
+#%% Gausfiltre
 Vx = Gaussian_Gradient_Filter(V, 0, 2)
 Vy = Gaussian_Gradient_Filter(V, 1, 2)
 Vt = Gaussian_Gradient_Filter(V, 2, 2)
 
+#%% Prøv på 1 pixel
 px, py, pt = 50, 110, 0
 radius = 2
 
@@ -86,7 +87,16 @@ pil = plt.quiver(*origin, x,y, color=['r'], scale=21)
 plt.savefig("draw_on_image_03.png")
 plt.show()
 
-#%% Hvad 
+#%% Hvad sker der hvis vi prøver på hele billedet?
+px, py, pt = 255, 255, 0
+radius = 2
+
+px_region = slice(px-radius, px+radius+1)
+py_region = slice(py-radius, py+radius+1)
+print(np.transpose(np.vstack((Vx[px_region, py_region, pt].flatten(), Vy[px_region, py_region, pt].flatten()))))
+
+
+
 # %%
 img3d_fucked = np.ones(np.shape(img3d))
 
