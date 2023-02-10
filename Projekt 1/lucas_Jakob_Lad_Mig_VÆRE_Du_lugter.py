@@ -46,7 +46,7 @@ sobkern_img = scipy.ndimage.sobel(img3d)
 
 #plot(sobkern_img)
 # %%
-<<<<<<< HEAD
+
 num = random.randint(0,2)
 print(num)
 vek = np.zeros(3)
@@ -57,8 +57,8 @@ gaussgrad_img_x = scipy.ndimage.gaussian_filter1d(img3d, sigma = 4, axis = 0, or
 gaussgrad_img_xy = scipy.ndimage.gaussian_filter1d(gaussgrad_img_x, sigma = 4, axis = 1, order = y)
 gaussgrad_img_xyt = scipy.ndimage.gaussian_filter1d(gaussgrad_img_xy, sigma = 3, axis = 2, order = t)
 #plot(img3d)
-plot(gaussgrad_img_xyt)
-=======
+#plot(gaussgrad_img_xyt)
+#%%
 V = img3d
 def Gaussian_Gradient_Filter(V, dim, sd, factor=2):
     x = np.arange(-factor*sd, factor*sd + 1)
@@ -97,11 +97,61 @@ vector = np.array([x,y])
 plt.imshow(V[:,:,0], cmap = "gray")
 plt.title('Draw a point on an image with matplotlib \n (case 2 with extent)')
 pil = plt.quiver(*origin, x,y, color=['r'], scale=21)
-plt.savefig("draw_on_image_03.png")
+plt.savefig("Test/Testcase.png")
 plt.show()
 
-#%% Hvad 
+#%% Kør et helt billede
+for i in range(0,255,10):
+  for j in range(0,255,10):
+
+    radius = 2
+    px, py, pt = i, j, 0
+
+
+
+    px_region = slice(px-radius, px+radius+1)
+    py_region = slice(py-radius, py+radius+1)
+
+
+    A = np.transpose(np.vstack((Vx[px_region, py_region, pt].flatten(), Vy[px_region, py_region, pt].flatten())))
+    b = -Vt[px_region, py_region, pt].flatten()
+
+    (x, y), _, _, _ = np.linalg.lstsq(A, b, rcond=None)
+
+    plt.quiver(px,py,x,y,color = "r", scale = 20)
+
+
+plt.imshow(V[:,:,0],cmap = 'gray')
+plt.show()
+#plt.savefig("Test/Test.png")
 # %%
+string = "Test/Billede_"
+for k in range(64):
+    for i in range(0,255,10):
+        for j in range(0,255,10):
+
+            radius = 2
+            px, py, pt = i, j, k
+
+
+
+            px_region = slice(px-radius, px+radius+1)
+            py_region = slice(py-radius, py+radius+1)
+
+
+            A = np.transpose(np.vstack((Vx[px_region, py_region, pt].flatten(), Vy[px_region, py_region, pt].flatten())))
+            b = -Vt[px_region, py_region, pt].flatten()
+
+            (x, y), _, _, _ = np.linalg.lstsq(A, b, rcond=None)
+
+            plt.quiver(px,py,x,y,color = "r", scale = 20)
+    tmp_string = string + str(k) + ".png"
+    plt.imshow(V[:,:,k],cmap = 'gray')
+    plt.show()
+    plt.close()
+    plt.savefig(tmp_string)
+#%%
+
 img3d_fucked = np.ones(np.shape(img3d))
 
 #for i in range(np.shape(img3d)[0]):
