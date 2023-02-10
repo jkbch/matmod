@@ -15,11 +15,15 @@ def video_plot(V):
         ax.imshow(V[:,:,i], cmap = "gray")
         plt.pause(0.01)
 
+<<<<<<< HEAD
 def img_plot(img):
     fig, ax = plt.subplots()
     ax.imshow(img, cmap = "gray")
 
 dir_path = "toyProblem_F22"
+=======
+dir_path = "Projekt 1/toyProblem_F22"
+>>>>>>> 768ac64793c950d89a15b23f02610814818d860f
 img_paths = os.listdir(dir_path)
 img_paths.sort()
 
