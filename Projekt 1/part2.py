@@ -13,7 +13,7 @@ def video_plot(V):
         ax.imshow(V[:,:,i], cmap = "gray")
         plt.pause(0.01)
 
-dir_path = "toyProblem_F22"
+dir_path = "Projekt 1/toyProblem_F22"
 img_paths = os.listdir(dir_path)
 img_paths.sort()
 
@@ -51,7 +51,7 @@ Vx = Gaussian_Gradient_Filter(V, 0, 2)
 Vy = Gaussian_Gradient_Filter(V, 1, 2)
 Vt = Gaussian_Gradient_Filter(V, 2, 2)
 
-px, py, pt = 200, 220, 0
+px, py, pt = 20, 220, 5
 radius = 2
 
 px_region = slice(px-radius, px+radius+1)

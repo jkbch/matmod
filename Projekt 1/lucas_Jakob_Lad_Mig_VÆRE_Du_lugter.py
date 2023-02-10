@@ -46,7 +46,7 @@ sobkern_img = scipy.ndimage.sobel(img3d)
 
 #plot(sobkern_img)
 # %%
-<<<<<<< HEAD
+#<<<<<<< HEAD
 num = random.randint(0,2)
 print(num)
 vek = np.zeros(3)
@@ -58,7 +58,7 @@ gaussgrad_img_xy = scipy.ndimage.gaussian_filter1d(gaussgrad_img_x, sigma = 4, a
 gaussgrad_img_xyt = scipy.ndimage.gaussian_filter1d(gaussgrad_img_xy, sigma = 3, axis = 2, order = t)
 #plot(img3d)
 plot(gaussgrad_img_xyt)
-=======
+#=======
 V = img3d
 def Gaussian_Gradient_Filter(V, dim, sd, factor=2):
     x = np.arange(-factor*sd, factor*sd + 1)
