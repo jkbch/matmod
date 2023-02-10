@@ -26,7 +26,8 @@ for images in files:
 
 img3d = np.stack(img_list,axis=2)
 
-
+for i in range(0,255,10):
+    print(i)
 
 
 ### plot

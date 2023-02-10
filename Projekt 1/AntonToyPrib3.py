@@ -51,17 +51,25 @@ Vx = Gaussian_Gradient_Filter(V, 0, 2)
 Vy = Gaussian_Gradient_Filter(V, 1, 2)
 Vt = Gaussian_Gradient_Filter(V, 2, 2)
 
-px, py, pt = 200, 220, 0
-radius = 2
+for i in range(0,255,10):
+  for j in range(0,255,10):
 
-px_region = slice(px-radius, px+radius+1)
-py_region = slice(py-radius, py+radius+1)
+    radius = 2
+    px, py, pt = i, j, 0
 
-A = np.transpose(np.vstack((Vx[px_region, py_region, pt].flatten(), Vy[px_region, py_region, pt].flatten())))
-b = -Vt[px_region, py_region, pt].flatten()
 
-(x, y), _, _, _ = np.linalg.lstsq(A, b, rcond=None)
 
-print(x, y)
+    px_region = slice(px-radius, px+radius+1)
+    py_region = slice(py-radius, py+radius+1)
 
-#plot(V_x)
+
+    A = np.transpose(np.vstack((Vx[px_region, py_region, pt].flatten(), Vy[px_region, py_region, pt].flatten())))
+    b = -Vt[px_region, py_region, pt].flatten()
+
+    (x, y), _, _, _ = np.linalg.lstsq(A, b, rcond=None)
+
+    plt.quiver(px,py,x,y,color = "r", scale = 20)
+
+
+plt.imshow(V[:,:,0],cmap = 'gray')
+plt.show()
