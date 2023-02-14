@@ -114,5 +114,5 @@ for pt in range(0, V.shape[2]):
 
     ax.clear()
     ax.imshow(V[:,:,pt], cmap = "gray")
-    ax.quiver(pys, pxs, ys, xs)
+    ax.quiver(pys, pxs, xs, ys)
     plt.pause(0.01)
