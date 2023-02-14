@@ -6,14 +6,6 @@ from skimage import io
 from skimage import color
 
 
-def plot_V(V):
-    fig, ax = plt.subplots()
-    for i in range(V.shape[-1]):
-        ax.clear()
-        ax.imshow(V[:,:,i], cmap = "gray")
-        plt.pause(0.01)
-
-
 def create_V(dir_path):
     img_paths = os.listdir(dir_path)
     img_paths.sort()
@@ -29,8 +21,17 @@ def create_V(dir_path):
     return V
 
 
-def gaussian_gradient_filter(V, dim, sd, factor=2):
-    x = np.arange(-factor*sd, factor*sd + 1)
+def plot_V(V):
+    fig, ax = plt.subplots()
+    for i in range(V.shape[-1]):
+        ax.clear()
+        ax.imshow(V[:,:,i], cmap = "gray")
+        plt.pause(0.01)
+
+
+def gaussian_gradient_V(V, dim, sd, factor):
+    x = np.arange(-factor * sd // 2, factor * sd // 2 + 1)
+
     G = 1 / (np.sqrt(2 * np.pi * sd**2)) * np.exp(- x**2 / (2 * sd**2))
     dG = -np.sqrt(2) * x * np.exp(-x**2 / (2 * sd**2))/(2 * np.sqrt(np.pi * sd**2) * sd**2)
 
@@ -54,22 +55,19 @@ def diff_V(V):
     #Vt = ndimage.prewitt(V, 2)
 
     sd = 2
-    Vx = gaussian_gradient_filter(V, 0, sd)
-    Vy = gaussian_gradient_filter(V, 1, sd)
-    Vt = gaussian_gradient_filter(V, 2, sd)
+    factor = 6
+    Vx = gaussian_gradient_V(V, 0, sd, factor)
+    Vy = gaussian_gradient_V(V, 1, sd, factor)
+    Vt = gaussian_gradient_V(V, 2, sd, factor)
 
     return (Vx, Vy, Vt)
 
 
-def displacement_pixel(Vx, Vy, Vt, px, py, pt, radius):
-    px_region = slice(px-radius, px+radius+1)
-    py_region = slice(py-radius, py+radius+1)
-
-    A = np.transpose(np.vstack((Vx[px_region, py_region, pt].flatten(), Vy[px_region, py_region, pt].flatten())))
-    b = -Vt[px_region, py_region, pt].flatten()
+def displacement_pixel(Vx_region, Vy_region, Vt_region):
+    A = np.transpose(np.vstack((Vx_region.flatten(), Vy_region.flatten())))
+    b = -Vt_region.flatten()
 
     x, y = np.linalg.lstsq(A, b, rcond=None)[0]
-
     return (x, y)
 
 
@@ -83,7 +81,9 @@ def displacement_frame(Vx, Vy, Vt, V_shape, pt, radius):
 
     for px in range(radius+1, V_shape[0], N):
         for py in range(radius+1, V_shape[1], N):
-            x, y = displacement_pixel(Vx, Vy, Vt, px, py, pt, radius)
+            p_indicies = slice(px-radius, px+radius+1), slice(py-radius, py+radius+1), pt
+
+            x, y = displacement_pixel(Vx[p_indicies], Vy[p_indicies], Vt[p_indicies])
 
             xs.append(x)
             ys.append(y)
@@ -104,8 +104,9 @@ def plot_V_wtih_optical_flow(V, radius):
 
         ax.clear()
         ax.imshow(V[:,:,pt], cmap = "gray")
-        ax.quiver(pys, pxs, ys, xs)
+        ax.quiver(pys, pxs, ys, [-x for x in xs])
         plt.pause(0.01)
+
 
 V = create_V("toyProblem_F22")
 radius = 4
