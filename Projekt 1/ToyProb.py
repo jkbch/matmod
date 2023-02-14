@@ -48,7 +48,7 @@ fig, ax = plt.subplots()
 ##### Original
 for  i in range(64):
     ax.clear()
-    ax.imshow(dx2[:,:,i],cmap = "gray")
+    ax.imshow(img3d[:,:,i],cmap = "gray")
     # Note that using time.sleep does *not* work here!
     plt.pause(0.01)
 
