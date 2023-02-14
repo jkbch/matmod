@@ -29,7 +29,7 @@ def plot_V(V):
         plt.pause(0.01)
 
 
-def gaussian_gradient_V(V, dim, sd, factor):
+def gaussian_gradient_filter(V, dim, sd, factor):
     x = np.arange(-factor * sd // 2, factor * sd // 2 + 1)
 
     G = 1 / (np.sqrt(2 * np.pi * sd**2)) * np.exp(- x**2 / (2 * sd**2))
@@ -45,7 +45,7 @@ def gaussian_gradient_V(V, dim, sd, factor):
     return dV
 
 
-def diff_V(V):
+def gradient_V(V):
     #Vx = V[1:,:,:] - V[0:-1,:,:]
     #Vy = V[:,1:,:] - V[:,0:-1,:]
     #Vt = V[:,:,1:] - V[:,:,0:-1]
@@ -56,14 +56,14 @@ def diff_V(V):
 
     sd = 2
     factor = 6
-    Vx = gaussian_gradient_V(V, 0, sd, factor)
-    Vy = gaussian_gradient_V(V, 1, sd, factor)
-    Vt = gaussian_gradient_V(V, 2, sd, factor)
+    Vx = gaussian_gradient_filter(V, 0, sd, factor)
+    Vy = gaussian_gradient_filter(V, 1, sd, factor)
+    Vt = gaussian_gradient_filter(V, 2, sd, factor)
 
     return (Vx, Vy, Vt)
 
 
-def displacement_pixel(Vx_region, Vy_region, Vt_region):
+def lucas_kanade_solution(Vx_region, Vy_region, Vt_region):
     A = np.transpose(np.vstack((Vx_region.flatten(), Vy_region.flatten())))
     b = -Vt_region.flatten()
 
@@ -71,7 +71,7 @@ def displacement_pixel(Vx_region, Vy_region, Vt_region):
     return (x, y)
 
 
-def displacement_frame(Vx, Vy, Vt, V_shape, pt, radius):
+def displacement_vectors_frame(Vx, Vy, Vt, V_shape, pt, radius):
     N = 2*radius + 1
 
     xs = []
@@ -81,9 +81,8 @@ def displacement_frame(Vx, Vy, Vt, V_shape, pt, radius):
 
     for px in range(radius+1, V_shape[0], N):
         for py in range(radius+1, V_shape[1], N):
-            p_indicies = slice(px-radius, px+radius+1), slice(py-radius, py+radius+1), pt
-
-            x, y = displacement_pixel(Vx[p_indicies], Vy[p_indicies], Vt[p_indicies])
+            p_indicies = (slice(px-radius, px+radius+1), slice(py-radius, py+radius+1), pt)
+            x, y = lucas_kanade_solution(Vx[p_indicies], Vy[p_indicies], Vt[p_indicies])
 
             xs.append(x)
             ys.append(y)
@@ -96,11 +95,11 @@ def displacement_frame(Vx, Vy, Vt, V_shape, pt, radius):
 def plot_V_wtih_optical_flow(V, radius):
     N = 2*radius + 1
 
-    Vx, Vy, Vt = diff_V(V)
+    Vx, Vy, Vt = gradient_V(V)
 
     fig, ax = plt.subplots()
     for pt in range(0, V.shape[2]):
-        pxs, pys, xs, ys = displacement_frame(Vx, Vy, Vt, V.shape, pt, radius)
+        pxs, pys, xs, ys = displacement_vectors_frame(Vx, Vy, Vt, V.shape, pt, radius)
 
         ax.clear()
         ax.imshow(V[:,:,pt], cmap = "gray")
@@ -108,7 +107,7 @@ def plot_V_wtih_optical_flow(V, radius):
         plt.pause(0.01)
 
 
-V = create_V("toyProblem_F22")
-radius = 4
+V = create_V("dårligsteVideo")
+radius = 10
 plot_V_wtih_optical_flow(V, radius)
 
