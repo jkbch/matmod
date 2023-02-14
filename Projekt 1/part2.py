@@ -57,6 +57,27 @@ def Gaussian_Gradient_Filter(V, dim, sd, factor=2):
 #Vy = Gaussian_Gradient_Filter(V, 1, 2)
 #Vt = Gaussian_Gradient_Filter(V, 2, 2)
 
+sd = 2
+
+Vx = ndimage.gaussian_filter1d(
+    ndimage.gaussian_filter1d(
+        ndimage.gaussian_filter1d(V, sigma=sd, axis=1),
+    sigma=sd, axis=2),
+sigma=sd, axis=0, order=1)
+
+Vy = ndimage.gaussian_filter1d(
+    ndimage.gaussian_filter1d(
+        ndimage.gaussian_filter1d(V, sigma=sd, axis=0),
+    sigma=sd, axis=2),
+sigma=sd, axis=1, order=1)
+
+Vt = ndimage.gaussian_filter1d(
+    ndimage.gaussian_filter1d(
+        ndimage.gaussian_filter1d(V, sigma=sd, axis=0),
+    sigma=sd, axis=1),
+sigma=sd, axis=2, order=1)
+
+
 radius = 4
 N = 2*radius + 1
 
