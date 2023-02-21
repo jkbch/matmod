@@ -94,11 +94,11 @@ b = -Vt[px_region, py_region, pt].flatten()
 print(x, y)
 origin = np.array([px,py])
 vector = np.array([x,y])
-plt.imshow(V[:,:,0], cmap = "gray")
-plt.title('Draw a point on an image with matplotlib \n (case 2 with extent)')
-pil = plt.quiver(*origin, x,y, color=['r'], scale=21)
-plt.savefig("Test/Testcase.png")
-plt.show()
+#plt.imshow(V[:,:,0], cmap = "gray")
+#plt.title('Draw a point on an image with matplotlib \n (case 2 with extent)')
+#pil = plt.quiver(*origin, x,y, color=['r'], scale=21)
+#plt.savefig("Test/Testcase.png")
+#plt.show()
 
 #%% Kør et helt billede
 for i in range(0,255,10):
@@ -120,10 +120,10 @@ for i in range(0,255,10):
 
     plt.quiver(px,py,x,y,color = "r", scale = 20)
 
-
 plt.imshow(V[:,:,0],cmap = 'gray')
+plt.savefig("Test/Test.png")
 plt.show()
-#plt.savefig("Test/Test.png")
+
 # %%
 string = "Test/Billede_"
 for k in range(64):
@@ -138,18 +138,26 @@ for k in range(64):
             px_region = slice(px-radius, px+radius+1)
             py_region = slice(py-radius, py+radius+1)
 
-
             A = np.transpose(np.vstack((Vx[px_region, py_region, pt].flatten(), Vy[px_region, py_region, pt].flatten())))
             b = -Vt[px_region, py_region, pt].flatten()
-
             (x, y), _, _, _ = np.linalg.lstsq(A, b, rcond=None)
-
             plt.quiver(px,py,x,y,color = "r", scale = 20)
     tmp_string = string + str(k) + ".png"
     plt.imshow(V[:,:,k],cmap = 'gray')
-    plt.show()
-    plt.close()
     plt.savefig(tmp_string)
+    plt.show()
+    
+#%%
+path = "Test/"
+img_list = []
+
+for images in os.listdir(path):
+    img2d = io.imread(path + images)
+    #img2d_gray = rgb2gray(img2d)
+    img_list.append(img2d)
+
+V_med_gradienter = np.stack(img_list,axis=2)
+plot(V_med_gradienter)
 #%%
 
 img3d_fucked = np.ones(np.shape(img3d))
