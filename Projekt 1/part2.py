@@ -102,10 +102,10 @@ def plot_V_wtih_optical_flow(V, radius):
         ax.clear()
         ax.imshow(V[:,:,pt], cmap = "gray")
         ax.quiver(pys, pxs, ys, [-x for x in xs])
-        plt.pause(0.5)
+        plt.pause(0.1)
 
 
-V = create_V("fjerdeGodeVideo")
+V = create_V("lidtDårligVideo")
 radius = 10
 plot_V_wtih_optical_flow(V, radius)
 
