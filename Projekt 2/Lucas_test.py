@@ -69,24 +69,37 @@ from skimage import img_as_float
 from skimage.color import rgb2gray
 from os import listdir
 
-pic = scipy.io.loadmat('multispectral_day01.mat')
-picArray = pic['immulti']
-count = -1
-for i in range(5):
-    for j in range(4):
-        count += 1
-        if(count > 18):
-            tmp = 1      
-        else:
-            plt.subplot(5,4, count+1)
-            plt.imshow(picArray[:,:,int(count)], cmap='gray', vmin=0, vmax=255)
-            plt.axis('off')
+def plotMulSpec(day):
+    str1 = 'multispectral_day' + day + '.mat'
+    str2 = 'color_day' + day + '.png'
+    pic = scipy.io.loadmat(str1)
+    picArray = pic['immulti']
+    count = -1
+    for i in range(5):
+        for j in range(4):
+            count += 1
+            if(count > 18):
+                colpic = io.imread(str2)
+                plt.subplot(5,4, count+1)
+                plt.imshow(colpic)
+                plt.axis('off')     
+            else:
+                plt.subplot(5,4, count+1)
+                plt.imshow(picArray[:,:,int(count)], cmap='gray', vmin=0, vmax=255)
+                plt.axis('off')
 
-plt.subplots_adjust(left=0,
-                    bottom=0.1,
-                    right=0.5,
-                    top=0.9,
-                    wspace=0.2,
-                    hspace=0.4)
-plt.show()
+    plt.subplots_adjust(left=0,
+                        bottom=0.1,
+                        right=0.5,
+                        top=0.9,
+                        wspace=0.2,
+                        hspace=0.4) 
+    plt.show()
+
+# %%
+plotMulSpec('01')
+
+# %%
+source = io.imread('annotation_day01.png')
+print(source.shape)
 # %%
