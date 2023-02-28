@@ -5,7 +5,7 @@ import math
 
 mu1 = 175.5
 mu2 = 162.9
-x = np.linspace(-2,2,1000)
+x = np.linspace(140,200,1000)
 f1 = np.zeros((1,1000))
 f2 = np.zeros((1,1000))
 def f1(x):
