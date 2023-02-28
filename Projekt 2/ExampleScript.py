@@ -10,15 +10,16 @@ import imageio as imio
 import os
 
 # Folder where your data files are placed
+
 dirIn = os.getcwd() + "/"
 print(dirIn)
 
-## Example of loading a multi spectral image
-
+# Example of loading a multi spectral image
 
 multiIm, annotationIm = hf.loadMulti('multispectral_day20.mat' , 'annotation_day20.png', dirIn)
 
 # multiIm is a multi spectral image - the dimensions can be seen by
+
 multiIm.shape
 
 ## Show image óf spectral band 7

@@ -4,51 +4,44 @@ import numpy as np
 import imageio as imio
 import matplotlib.pyplot as plt
 
-def load_multi(multi_im_path, annotation_im_path):
-    # load the multispectral image
-    im = sio.loadmat(multi_im_path)
-    multi_im = im['immulti']
-        
-    # make annotation image of zeros
-    annotation_im = np.zeros([multi_im.shape[0],multi_im.shape[1],3],dtype=bool)
-    
-    # read the mask image
-    a_im = imio.v2.imread(annotation_im_path)
-    
-    # put in ones
-    for i in range(0,3):
-        annotation_im[:,:,i] = (a_im[:,:,i] == 255) 
-    
-    return (multi_im, annotation_im)
+multi_im = sio.loadmat("multispectral_day01.mat")['immulti']
+annotation_im = imio.v3.imread("annotation_day01.png") == 255
 
-(multi_im, annotation_im) = load_multi("multispectral_day01.mat", "annotation_day01.png")
+print(multi_im.shape)
+print(annotation_im.shape)
 
-# print(multi_im.shape)
-# print(annotation_im.shape)
+fat_multi_pixels = np.array([multi_im[annotation_im[:, :, 1], idx] for idx in range(multi_im.shape[2])])
+meat_multi_pixels = np.array([multi_im[annotation_im[:, :, 2], idx] for idx in range(multi_im.shape[2])])
 
-green_means = np.array([np.mean(multi_im[annotation_im[:, :, 1], idx]) for idx in range(multi_im.shape[2])])
-red_means = np.array([np.mean(multi_im[annotation_im[:, :, 2], idx]) for idx in range(multi_im.shape[2])])
+print(fat_multi_pixels.shape)
+print(meat_multi_pixels.shape)
 
-green_sds = np.array([np.std(multi_im[annotation_im[:, :, 1], idx]) for idx in range(multi_im.shape[2])])
-red_sds = np.array([np.std(multi_im[annotation_im[:, :, 2], idx]) for idx in range(multi_im.shape[2])])
+fat_means = np.mean(fat_multi_pixels, axis=1)
+meat_means = np.mean(meat_multi_pixels, axis=1)
 
-# print(green_means)
-# print(red_means)
-# print(green_sds)
-# print(red_sds)
+fat_stds = np.std(fat_multi_pixels, axis=1)
+meat_stds = np.std(meat_multi_pixels, axis=1)
+
+print(fat_means)
+print(meat_means)
+
+print(fat_stds)
+print(meat_stds)
+
+# %%
 
 def f(x, mu, sigma):
     return 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-1/2 * ((x - mu) / sigma)**2)
 
 idx = 0
-x = np.linspace(-20, 20, 100) + (green_means[idx] + red_means[idx]) / 2
+x = np.linspace(-20, 20, 100) + (fat_means[idx] + meat_means[idx]) / 2
 
 # plt.plot(x, f(x, green_means[idx], green_sds[idx]), color="green")
 # plt.plot(x, f(x, red_means[idx], red_sds[idx]), color="red")
 # plt.show() 
 
 # Find intersections of two functions
-t = x[np.argwhere(np.diff(np.sign(f(x, green_means[idx], green_sds[idx]) - f(x, red_means[idx], red_sds[idx])))).flatten()[0]]
+t = x[np.argwhere(np.diff(np.sign(f(x, fat_means[idx], fat_stds[idx]) - f(x, meat_means[idx], meat_stds[idx])))).flatten()[0]]
 print(t)
 
 # %%
