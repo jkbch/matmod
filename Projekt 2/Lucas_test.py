@@ -71,11 +71,22 @@ from os import listdir
 
 pic = scipy.io.loadmat('multispectral_day01.mat')
 picArray = pic['immulti']
+count = -1
+for i in range(5):
+    for j in range(4):
+        count += 1
+        if(count > 18):
+            tmp = 1      
+        else:
+            plt.subplot(5,4, count+1)
+            plt.imshow(picArray[:,:,int(count)], cmap='gray', vmin=0, vmax=255)
+            plt.axis('off')
 
-fig = plt.figure(constrained_layout=True, figsize=(10, 8))
-fig.suptitle('fig')
-subfigs = fig.subfigures(4, 5, wspace=0.07)
-subfigs[0].imshow(picArray[:,:,1],cmap='gray', vmin=0, vmax=255)
-
+plt.subplots_adjust(left=0,
+                    bottom=0.1,
+                    right=0.5,
+                    top=0.9,
+                    wspace=0.2,
+                    hspace=0.4)
 plt.show()
-    # %%
+# %%
