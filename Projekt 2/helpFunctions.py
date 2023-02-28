@@ -17,14 +17,14 @@ def loadMulti(imName, *args):
     #       layer 3 is the meat. The pixel value is 1 in the annotation and 0
     #       elsewhere.
     # 
-    # Anders Nymark Christensen - DTU, 20180130
+    # Anders Nymark Christensen - DTU, 20230221
     # Adapted from
     # Anders Lindbjerg Dahl - DTU, January 2013
     # 
     
     import scipy.io as sio
     import numpy as np
-    from scipy import misc
+    import imageio as imio
     
     annotationName = args[0] 
     if len(args) < 2:
@@ -41,7 +41,7 @@ def loadMulti(imName, *args):
     annotationIm = np.zeros([multiIm.shape[0],multiIm.shape[1],3],dtype=bool)
     
     # read the mask image
-    aIm = misc.imread(dirPath+annotationName)
+    aIm = imio.imread(dirPath+annotationName)
     
     # put in ones
     for i in range(0,3):

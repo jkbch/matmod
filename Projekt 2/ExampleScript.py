@@ -1,17 +1,16 @@
-file:///C:/Users/anym/Downloads/TenPercent_4x-80kV-10W-15s-LE3_Drift.txrmgigabi# This script exemplifies the use of the various functions supplied for the
-# first exercise
+# Salami exercise
 # Anders Nymark Christensen
-# 20180130
+# 20230221
 # Adapted from work by Anders Bjorholm Dahl
 
 # Folder where your data files are placed
-dirIn = 'C:/Dropbox/ArbejdeDTU/Undervisning/02526_MatematiskModellering/2018/reduced_material/2018/Exercises/exercise1_salami/Python/data/'
+dirIn = 'C:/Users/anym/Downloads/data/'
 
 
 import helpFunctions as hf 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy import misc
+import imageio as imio
     
 
 ## Example of loading a multi spectral image
@@ -73,7 +72,7 @@ plt.show()
 # where the pixel coordinates are given as input
 
 # Load RGB image
-imRGB = misc.imread(dirIn + 'color_day20.png')
+imRGB = imio.imread(dirIn + 'color_day20.png')
 
 # Pixel coordinates for the fat annotation
 [fatPix, fatR, fatC] = hf.getPix(multiIm, annotationIm[:,:,1])
