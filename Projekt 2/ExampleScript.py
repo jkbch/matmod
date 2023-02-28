@@ -3,15 +3,15 @@
 # 20230221
 # Adapted from work by Anders Bjorholm Dahl
 
-# Folder where your data files are placed
-dirIn = 'C:/Users/anym/Downloads/data/'
-
-
 import helpFunctions as hf 
 import matplotlib.pyplot as plt
 import numpy as np
 import imageio as imio
-    
+import os
+
+# Folder where your data files are placed
+dirIn = os.getcwd() + "/"
+print(dirIn)
 
 ## Example of loading a multi spectral image
 

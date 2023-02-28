@@ -1,28 +1,28 @@
-import matplotlib as plt
-import matplotlib.pyplot as py
+# %%
 import numpy as np
-import math
-from sympy import symbols, solve
+from scipy import io
 
-mu1 = 175.5
-mu2 = 162.9
-x = np.linspace(140,200,1000)
-f1 = np.zeros((1,1000))
-f2 = np.zeros((1,1000))
+pic = io.loadmat('multispectral_day01.mat')
+picArray = pic['immulti']
+
+print(picArray)
+
+# %%
+
+def Sigma(A):
+    m=np.sqrt(len(A))
+    mu = np.zeros(1,m)
+    sigma = np.zeros(m,m)
+
+    # Compute mean of each r
+    for i in range(m):
+        mu[i] = np.mean(A,i)
+        print(mu[i])
+    for a in range(m):
+        for b in range(m): 
+
+          simga[a,b] =  1 / (m-1) * np.sum((A[a,:]-mu) * (A[b,:]-mu))
 
 
-def f1(x):
-     return 1 / (6.7*math.sqrt(2*math.pi))*np.exp(-1/2*1/(6.7**2)*(x-mu1)**2)
-def f2(x): 
-    return 1 / (6.7*math.sqrt(2*math.pi))*np.exp(-1/2*1/(6.7**2)*(x-mu2)**2)
-
-
-py.plot(x,f1(x),color='green',linewidth=2)
-py.plot(x,f2(x),color = 'red', linewidth = 2)
-py.show()
-
-# Opgave 3, solve for x
-
-py.plot(x[400:600],f1(x)[400:600]/f2(x)[400:600],color='pink',linewidth = 2)
-py.show()
-# Vi kan alæse fra grafen at det er omkring 170
+Sigma(picArray)
+# %%
