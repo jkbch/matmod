@@ -43,6 +43,22 @@ x = np.linspace(-20, 20, 100) + (fat_means[idx] + meat_means[idx]) / 2
 # Find intersections of two functions
 t = x[np.argwhere(np.diff(np.sign(f(x, fat_means[idx], fat_stds[idx]) - f(x, meat_means[idx], meat_stds[idx])))).flatten()[0]]
 print(t)
+# %%
+sigma_fat=np.zeros((19,19))
+sigma_meat=np.zeros((19,19))
+
+for a in range(19):
+    for b in range(19):
+       sigma_fat[a,b]=sum((fat_multi_pixels[a,:]-fat_means[a])*(fat_multi_pixels[b,:]-fat_means[b]))/(fat_multi_pixels.shape[1]-1) 
+       sigma_meat[a,b]=sum((meat_multi_pixels[:,a]-meat_means[a])*(meat_multi_pixels[:,b]-meat_means[b]))/(meat_multi_pixels.shape[1]-1) 
+
+print(sigma_fat)
+print(sigma_meat)
+
+
+
+
+
 
 # %%
 

@@ -5,24 +5,26 @@ from scipy import io
 pic = io.loadmat('multispectral_day01.mat')
 picArray = pic['immulti']
 
-print(picArray)
+#print(picArray)
 
 # %%
 
 def Sigma(A):
-    m=np.sqrt(len(A))
-    mu = np.zeros(1,m)
-    sigma = np.zeros(m,m)
+    print(A)
+    m=len(A)
+    mu = np.zeros((1,m))
+    sigma = np.zeros((m,m))
+    
 
-    # Compute mean of each r
+    # Compute mean of each row
     for i in range(m):
         mu[i] = np.mean(A,i)
         print(mu[i])
     for a in range(m):
         for b in range(m): 
 
-          simga[a,b] =  1 / (m-1) * np.sum((A[a,:]-mu) * (A[b,:]-mu))
+          sigma[a,b] =  1 / (m-1) * np.sum((A[a,:]-mu) * (A[b,:]-mu))
 
 
-Sigma(picArray)
+Sigma(picArray[:,:,0])
 # %%
