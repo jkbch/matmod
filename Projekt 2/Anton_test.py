@@ -146,15 +146,18 @@ def find_NonZero(colorIndex,Multispectral,layer):
 def calculate_means(colorIndex,Multispectral):
     
     I,J,K = Multispectral.shape
+    SS = sum(colorIndex)
+    print(SS.shape)
+    print(SS)
+    
     mu = np.zeros([K,1])
     sd = np.zeros([K,1])
+    nonZeroLayer = np.zeros([SS,K])
     for k in range(K):
-        nonZeroLayer = find_NonZero(colorIndex,Multispectral,k)
+        nonZeroLayer[:,k] = find_NonZero(colorIndex,Multispectral,k)
         mu[k] = np.mean(nonZeroLayer)
         sd[k] = np.std(nonZeroLayer)
-    print(mu)
-    print(sd)
-    return mu, sd
+    return mu, sd, nonZeroLayer
 
 
 
@@ -165,11 +168,10 @@ Multispectral = Multispectral['immulti']
 
 print(Multispectral.shape)
 
-mu, sd = calculate_means(colorPull(annotation,2),Multispectral)
-
-print(mu.shape)
-print(sd)
-
+mu_fat, sd_fat, fat_val = calculate_means(colorPull(annotation,1),Multispectral)
+mu_meat, sd_meat, meat_val = calculate_means(colorPull(annotation,2),Multispectral)
 
 
 # %%
+# We will now attempt to generate plots
+
