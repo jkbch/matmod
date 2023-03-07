@@ -12,8 +12,8 @@ im_mask_unknown = im_masks[:, :, 0]
 im_mask_fat = im_masks[:, :, 1]
 im_mask_meat = im_masks[:, :, 2]
 
-multi_pixels_fat = np.array([im_multi[im_mask_fat, idx] for idx in range(im_multi.shape[2])])
-multi_pixels_meat = np.array([im_multi[im_mask_meat, idx] for idx in range(im_multi.shape[2])])
+multi_pixels_fat = np.array([im_multi[im_mask_fat, i] for i in range(im_multi.shape[2])])
+multi_pixels_meat = np.array([im_multi[im_mask_meat, i] for i in range(im_multi.shape[2])])
 
 means_fat = np.mean(multi_pixels_fat, axis=1)
 means_meat = np.mean(multi_pixels_meat, axis=1)
