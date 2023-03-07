@@ -47,16 +47,21 @@ print(t)
 sigma_fat=np.zeros((19,19))
 sigma_meat=np.zeros((19,19))
 
+m=fat_multi_pixels.shape[1]
+n=meat_multi_pixels.shape[1]
+
 for a in range(19):
     for b in range(19):
-       sigma_fat[a,b]=sum((fat_multi_pixels[a,:]-fat_means[a])*(fat_multi_pixels[b,:]-fat_means[b]))/(fat_multi_pixels.shape[1]-1) 
-       sigma_meat[a,b]=sum((meat_multi_pixels[:,a]-meat_means[a])*(meat_multi_pixels[:,b]-meat_means[b]))/(meat_multi_pixels.shape[1]-1) 
+       sigma_fat[a,b]=sum((fat_multi_pixels[a,:]-fat_means[a])*(fat_multi_pixels[b,:]-fat_means[b]))/(m-1) 
+       sigma_meat[a,b]=sum((meat_multi_pixels[:,a]-meat_means[a])*(meat_multi_pixels[:,b]-meat_means[b]))/(n-1) 
 
 print(sigma_fat)
 print(sigma_meat)
 
+sigma_pooled=(m-1)*sigma_fat+(n-1)*sigma_meat/(m+n-2)
 
 
+print(sigma_pooled)
 
 
 
