@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 im_multi = sio.loadmat("multispectral_day01.mat")['immulti']
 im_masks = imio.imread("annotation_day01.png") == 255
 
-im_mask_salami = np.sum(im_masks, axis=2)
 im_mask_unknown = im_masks[:, :, 0]
 im_mask_fat = im_masks[:, :, 1]
 im_mask_meat = im_masks[:, :, 2]
+im_mask_salami = np.sum(im_masks, axis=2)
 
 multi_pixels_fat = np.array([im_multi[im_mask_fat, i] for i in range(im_multi.shape[2])])
 multi_pixels_meat = np.array([im_multi[im_mask_meat, i] for i in range(im_multi.shape[2])])
@@ -67,7 +67,6 @@ def classify_im_mutli(im_multi, im_mask):
     
     return im
 
-# %%
 print(error_rate(multi_pixels_fat, multi_pixels_meat))
 
 im = classify_im_mutli(im_multi, im_mask_salami)
