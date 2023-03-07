@@ -117,6 +117,59 @@ from skimage import img_as_float
 from skimage.color import rgb2gray
 from os import listdir
 
-pic = io.imread('annotation_day01.'png)
-plt.imshow()
+def colorPull(annotation,color):
+
+
+    rgb_array = annotation[:,:,color]
+    
+    I,J,K = annotation.shape
+    colorIndex = np.zeros([I,J])
+
+    for j in range(J):
+        for i in range(I):
+            if (rgb_array[i,j]>2):
+                colorIndex[i,j] = 1
+    return colorIndex
+
+def find_NonZero(colorIndex,Multispectral,layer):
+    IndexSum = sum(colorIndex)
+    Spectral = Multispectral[:,:,layer]
+    I,J = Spectral.shape
+    non_Zero = []
+
+    for i in range(I):
+        for j in range(J):
+            if Spectral[i,j] * colorIndex[i,j] != 0:
+                non_Zero.append(Spectral[i,j])
+    return non_Zero
+
+def calculate_means(colorIndex,Multispectral):
+    
+    I,J,K = Multispectral.shape
+    mu = np.zeros([K,1])
+    sd = np.zeros([K,1])
+    for k in range(K):
+        nonZeroLayer = find_NonZero(colorIndex,Multispectral,k)
+        mu[k] = np.mean(nonZeroLayer)
+        sd[k] = np.std(nonZeroLayer)
+    print(mu)
+    print(sd)
+    return mu, sd
+
+
+
+annotation = io.imread('annotation_day01.png')
+Multispectral = scipy.io.loadmat('Multispectral_day01.mat')
+
+Multispectral = Multispectral['immulti']
+
+print(Multispectral.shape)
+
+mu, sd = calculate_means(colorPull(annotation,2),Multispectral)
+
+print(mu.shape)
+print(sd)
+
+
+
 # %%

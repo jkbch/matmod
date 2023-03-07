@@ -7,14 +7,8 @@ import matplotlib.pyplot as plt
 multi_im = sio.loadmat("multispectral_day01.mat")['immulti']
 annotation_im = imio.v3.imread("annotation_day01.png") == 255
 
-print(multi_im.shape)
-print(annotation_im.shape)
-
 fat_multi_pixels = np.array([multi_im[annotation_im[:, :, 1], idx] for idx in range(multi_im.shape[2])])
 meat_multi_pixels = np.array([multi_im[annotation_im[:, :, 2], idx] for idx in range(multi_im.shape[2])])
-
-print(fat_multi_pixels.shape)
-print(meat_multi_pixels.shape)
 
 fat_means = np.mean(fat_multi_pixels, axis=1)
 meat_means = np.mean(meat_multi_pixels, axis=1)
@@ -22,11 +16,25 @@ meat_means = np.mean(meat_multi_pixels, axis=1)
 fat_stds = np.std(fat_multi_pixels, axis=1)
 meat_stds = np.std(meat_multi_pixels, axis=1)
 
-print(fat_means)
-print(meat_means)
+fat_cov = np.cov(fat_multi_pixels)
+meat_cov = np.cov(meat_multi_pixels)
 
-print(fat_stds)
-print(meat_stds)
+cov = 1 / (fat_multi_pixels[1] + meat_multi_pixels[1])
+
+# print(multi_im.shape)
+# print(annotation_im.shape)
+
+# print(fat_multi_pixels.shape)
+# print(meat_multi_pixels.shape)
+
+# print(fat_means)
+# print(meat_means)
+
+# print(fat_stds)
+# print(meat_stds)
+
+# print(fat_cov.shape)
+# print(meat_cov.shape)
 
 # %%
 
@@ -43,6 +51,33 @@ x = np.linspace(-20, 20, 100) + (fat_means[idx] + meat_means[idx]) / 2
 # Find intersections of two functions
 t = x[np.argwhere(np.diff(np.sign(f(x, fat_means[idx], fat_stds[idx]) - f(x, meat_means[idx], meat_stds[idx])))).flatten()[0]]
 print(t)
+
+# %%
+
+
+
+
+# %%
+# sigma_fat=np.zeros((19,19))
+# sigma_meat=np.zeros((19,19))
+
+# m_fat = fat_multi_pixels.shape[1]
+# m_meat = meat_multi_pixels.shape[1]
+
+# for a in range(19):
+#     for b in range(19):
+#        sigma_fat[a,b] = sum((fat_multi_pixels[a,:] - fat_means[a])*(fat_multi_pixels[b,:] - fat_means[b]))/(m_fat - 1) 
+#        sigma_meat[a,b] = sum((meat_multi_pixels[:,a] - meat_means[a])*(meat_multi_pixels[:,b] - meat_means[b]))/(m_meat - 1) 
+
+# print(np.cov(fat_multi_pixels))
+# print(sigma_fat)
+
+# print(sigma_meat)
+
+# sigma_pooled=(m-1)*sigma_fat+(n-1)*sigma_meat/(m+n-2)
+
+
+# print(sigma_pooled)
 
 # %%
 
