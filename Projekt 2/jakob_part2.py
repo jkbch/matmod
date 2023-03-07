@@ -1,4 +1,4 @@
-# %% Setup
+# %%
 import scipy.io as sio
 import numpy as np
 import imageio as imio
@@ -39,27 +39,15 @@ def S_fat(x):
 def S_meat(x): 
     return x.T @ cov_pooled_inv @ means_meat - means_meat.T @ cov_pooled_inv @ means_meat / 2 + np.log(p_meat)
 
-def classify_multi_pixels(multi_pixels):
-    idxs_fat = []
-    idxs_meat = []
-
-    for i in range(multi_pixels.shape[1]):
-        if S_fat(multi_pixels[:,i]) >= S_meat(multi_pixels[:,i]):
-            idxs_fat.append(i)
-        else:
-            idxs_meat.append(i)
-    
-    return (idxs_fat, idxs_meat)
-
 def error_rate(multi_pixels_fat, multi_pixels_meat):
     error_count = 0
 
-    for i in range(multi_pixels_fat.shape[1]):
-        if S_fat(multi_pixels_fat[:,i]) < S_meat(multi_pixels_fat[:,i]):
+    for x in multi_pixels_fat.T:
+        if S_fat(x) < S_meat(x):
             error_count += 1
 
-    for i in range(multi_pixels_meat.shape[1]):
-        if S_fat(multi_pixels_meat[:,i]) >= S_meat(multi_pixels_meat[:,i]):
+    for x in multi_pixels_meat.T:
+        if S_fat(x) >= S_meat(x):
             error_count += 1
 
     error_rate = error_count / (multi_pixels_fat.shape[1] + multi_pixels_meat.shape[1])
@@ -79,7 +67,9 @@ def classify_im_mutli(im_multi, im_mask):
     
     return im
 
+# %%
 print(error_rate(multi_pixels_fat, multi_pixels_meat))
+
 im = classify_im_mutli(im_multi, im_mask_salami)
 plt.imshow(im)
 plt.show()
