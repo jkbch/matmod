@@ -106,6 +106,6 @@ for train_day in days:
 
 matrix = [[rate for day, rate in rates.items()] for train_day, rates in error_rates.items()]
 print('Error table')
-print('\n'.join(['\t'.join([f'{cell:.5f}' if not np.isnan(cell) else "-" for cell in row]) for row in matrix]))
+print('\n'.join(['\t'.join([f'{cell:.5f}' for cell in row]) for row in matrix]))
 
 # %%
