@@ -1,136 +1,108 @@
 # %%
 import scipy.io as sio
 import numpy as np
-import imageio as imio
+import imageio.v2 as imio
 import matplotlib.pyplot as plt
 
-multi_im = sio.loadmat("multispectral_day01.mat")['immulti']
-annotation_im = imio.v3.imread("annotation_day01.png") == 255
+days = ["01", "06", "13", "20", "28"]
+error_rates = {day:{day:float('nan') for day in days} for day in days}
 
-fat_multi_pixels = np.array([multi_im[annotation_im[:, :, 1], idx] for idx in range(multi_im.shape[2])])
-meat_multi_pixels = np.array([multi_im[annotation_im[:, :, 2], idx] for idx in range(multi_im.shape[2])])
+for train_day in days:
+    print("Training day: " + train_day)
 
-fat_means = np.mean(fat_multi_pixels, axis=1)
-meat_means = np.mean(meat_multi_pixels, axis=1)
+    im_multi = sio.loadmat(f'multispectral_day{train_day}.mat')['immulti']
+    im_masks = imio.imread(f'annotation_day{train_day}.png') == 255
 
-fat_stds = np.std(fat_multi_pixels, axis=1)
-meat_stds = np.std(meat_multi_pixels, axis=1)
+    im_mask_unknown = im_masks[:, :, 0]
+    im_mask_fat = im_masks[:, :, 1]
+    im_mask_meat = im_masks[:, :, 2]
+    im_mask_salami = np.sum(im_masks, axis=2)
 
-fat_cov = np.cov(fat_multi_pixels)
-meat_cov = np.cov(meat_multi_pixels)
+    multi_pixels_fat = np.array([im_multi[im_mask_fat, i] for i in range(im_multi.shape[2])])
+    multi_pixels_meat = np.array([im_multi[im_mask_meat, i] for i in range(im_multi.shape[2])])
 
-cov = 1 / (fat_multi_pixels[1] + meat_multi_pixels[1])
+    means_fat = np.mean(multi_pixels_fat, axis=1)
+    means_meat = np.mean(multi_pixels_meat, axis=1)
 
-# print(multi_im.shape)
-# print(annotation_im.shape)
+    stds_fat = np.std(multi_pixels_fat, axis=1)
+    stds_meat = np.std(multi_pixels_meat, axis=1)
 
-# print(fat_multi_pixels.shape)
-# print(meat_multi_pixels.shape)
+    cov_fat = np.cov(multi_pixels_fat)
+    cov_meat = np.cov(multi_pixels_meat)
 
-# print(fat_means)
-# print(meat_means)
+    m_fat = multi_pixels_fat.shape[1]
+    m_meat = multi_pixels_meat.shape[1]
 
-# print(fat_stds)
-# print(meat_stds)
+    cov_pooled = ((m_fat - 1) * cov_fat + (m_meat - 1) * cov_meat) / (m_fat + m_meat - 2)
+    cov_pooled_inv = np.linalg.inv(cov_pooled)
 
-# print(fat_cov.shape)
-# print(meat_cov.shape)
+    p_fat = 0.5
+    p_meat = 0.5
+
+    def S_fat(x): 
+        return x.T @ cov_pooled_inv @ means_fat - means_fat.T @ cov_pooled_inv @ means_fat / 2 + np.log(p_fat)
+
+    def S_meat(x): 
+        return x.T @ cov_pooled_inv @ means_meat - means_meat.T @ cov_pooled_inv @ means_meat / 2 + np.log(p_meat)
+
+    def global_error_rate(multi_pixels_fat, multi_pixels_meat):
+        count = 0
+
+        for x in multi_pixels_fat.T:
+            if S_fat(x) < S_meat(x):
+                count += 1
+
+        for x in multi_pixels_meat.T:
+            if S_fat(x) >= S_meat(x):
+                count += 1
+
+        rate = count / (multi_pixels_fat.shape[1] + multi_pixels_meat.shape[1])
+
+        return (rate, count)
+
+    def classify_im_mutli(im_multi, im_mask):
+        im = np.zeros((im_multi.shape[0], im_multi.shape[1], 3), dtype=np.uint8)
+
+        for x in range(im_multi.shape[0]):
+            for y in range(im_multi.shape[1]):
+                if im_mask[x,y]:
+                    if S_fat(im_multi[x, y, :]) >= S_meat(im_multi[x, y, :]):
+                        im[x, y, 1] = 255
+                    else:
+                        im[x, y, 2] = 255
+        
+        return im
+    
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2)
+    axs = [ax1, ax2, ax3, ax4]
+
+    for ax, day in zip(axs, [day for day in days if day != train_day]):
+        im_multi = sio.loadmat(f'multispectral_day{day}.mat')['immulti']
+        im_masks = imio.imread(f'annotation_day{day}.png') == 255
+
+        im_mask_unknown = im_masks[:, :, 0]
+        im_mask_fat = im_masks[:, :, 1]
+        im_mask_meat = im_masks[:, :, 2]
+        im_mask_salami = np.sum(im_masks, axis=2)
+
+        multi_pixels_fat = np.array([im_multi[im_mask_fat, i] for i in range(im_multi.shape[2])])
+        multi_pixels_meat = np.array([im_multi[im_mask_meat, i] for i in range(im_multi.shape[2])])
+
+        (rate, count) = global_error_rate(multi_pixels_fat, multi_pixels_meat)
+        print(f'Day: {day}, error count: {count:02d}, error rate: {rate:.5f}')
+        error_rates[train_day][day] = rate
+
+        im = classify_im_mutli(im_multi, im_mask_salami)
+        ax.imshow(im)
+        ax.set_title(f'Day: {day}')
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
+
+    fig.suptitle(f'Train day: {train_day}')
+    plt.show()
+
+matrix = [[rate for day, rate in rates.items()] for train_day, rates in error_rates.items()]
+print('Error table')
+print('\n'.join(['\t'.join([f'{cell:.5f}' if not np.isnan(cell) else "" for cell in row]) for row in matrix]))
 
 # %%
-
-def f(x, mu, sigma):
-    return 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-1/2 * ((x - mu) / sigma)**2)
-
-idx = 0
-x = np.linspace(-20, 20, 100) + (fat_means[idx] + meat_means[idx]) / 2
-
-# plt.plot(x, f(x, green_means[idx], green_sds[idx]), color="green")
-# plt.plot(x, f(x, red_means[idx], red_sds[idx]), color="red")
-# plt.show() 
-
-# Find intersections of two functions
-t = x[np.argwhere(np.diff(np.sign(f(x, fat_means[idx], fat_stds[idx]) - f(x, meat_means[idx], meat_stds[idx])))).flatten()[0]]
-print(t)
-
-# %%
-
-
-
-
-# %%
-# sigma_fat=np.zeros((19,19))
-# sigma_meat=np.zeros((19,19))
-
-# m_fat = fat_multi_pixels.shape[1]
-# m_meat = meat_multi_pixels.shape[1]
-
-# for a in range(19):
-#     for b in range(19):
-#        sigma_fat[a,b] = sum((fat_multi_pixels[a,:] - fat_means[a])*(fat_multi_pixels[b,:] - fat_means[b]))/(m_fat - 1) 
-#        sigma_meat[a,b] = sum((meat_multi_pixels[:,a] - meat_means[a])*(meat_multi_pixels[:,b] - meat_means[b]))/(m_meat - 1) 
-
-# print(np.cov(fat_multi_pixels))
-# print(sigma_fat)
-
-# print(sigma_meat)
-
-# sigma_pooled=(m-1)*sigma_fat+(n-1)*sigma_meat/(m+n-2)
-
-
-# print(sigma_pooled)
-
-# %%
-
-# x_size = multi_im.shape[0]
-# y_size = multi_im.shape[1]
-# z_size = multi_im.shape[2]
-
-# mean_greens = np.empty(z_size)
-# mean_reds = np.empty(z_size)
-
-# sigma_greens = np.empty(z_size)
-# sigma_reds = np.empty(z_size)
-
-# for z in range(z_size):
-#     sum_green = 0
-#     count_green = 0
-
-#     sum_red = 0
-#     count_red = 0
-
-#     for x in range(x_size):
-#         for y in range(y_size):
-#             if(annotation_im[x, y, 1]):
-#                 sum_green += multi_im[x, y, z]
-#                 count_green += 1
-            
-#             if(annotation_im[x, y, 2]):
-#                 sum_red += multi_im[x, y, z]
-#                 count_red += 1
-
-#     mean_greens[z] = sum_green / count_green
-#     mean_reds[z] = sum_red / count_red
-
-#     sigma_sum_green = 0
-#     sigma_sum_red = 0
-
-#     for x in range(x_size):
-#         for y in range(y_size):
-#             if(annotation_im[x, y, 1]):
-#                 sigma_sum_green += (multi_im[x, y, z] - mean_greens[z])**2
-            
-#             if(annotation_im[x, y, 2]):
-#                 sigma_sum_red += (multi_im[x, y, z] - mean_reds[z])**2
-
-
-#     sigma_greens[z] = np.sqrt(1 / (count_green - 1) * sigma_sum_green)
-#     sigma_reds[z] = np.sqrt(1 / (count_red - 1) * sigma_sum_red)
-
-# print(mean_greens)
-# print(mean_reds)
-
-# print(sigma_greens)
-# print(sigma_reds)
-
-
-# # %%
