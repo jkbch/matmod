@@ -73,6 +73,9 @@ for train_day in days:
         
         return im
     
+    (rate, count) = global_error_rate(multi_pixels_fat, multi_pixels_meat)
+    error_rates[train_day][train_day] = rate
+
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2)
     axs = [ax1, ax2, ax3, ax4]
 
