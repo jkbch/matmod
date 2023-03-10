@@ -4,19 +4,19 @@ import numpy as np
 import imageio.v2 as imio
 import matplotlib.pyplot as plt
 
-days = ["01", "06", "13", "20", "28"]
+days = ['01', '06', '13', '20', '28']
 error_rates = {day:{day:float('nan') for day in days} for day in days}
 
 for train_day in days:
-    print("Training day: " + train_day)
+    print(f'Training day: {train_day}')
 
     im_multi = sio.loadmat(f'multispectral_day{train_day}.mat')['immulti']
     im_masks = imio.imread(f'annotation_day{train_day}.png') == 255
 
-    im_mask_unknown = im_masks[:, :, 0]
+    # im_mask_unknown = im_masks[:, :, 0]
     im_mask_fat = im_masks[:, :, 1]
     im_mask_meat = im_masks[:, :, 2]
-    im_mask_salami = np.sum(im_masks, axis=2)
+    # im_mask_salami = np.sum(im_masks, axis=2)
 
     multi_pixels_fat = np.array([im_multi[im_mask_fat, i] for i in range(im_multi.shape[2])])
     multi_pixels_meat = np.array([im_multi[im_mask_meat, i] for i in range(im_multi.shape[2])])
@@ -24,8 +24,8 @@ for train_day in days:
     means_fat = np.mean(multi_pixels_fat, axis=1)
     means_meat = np.mean(multi_pixels_meat, axis=1)
 
-    stds_fat = np.std(multi_pixels_fat, axis=1)
-    stds_meat = np.std(multi_pixels_meat, axis=1)
+    # stds_fat = np.std(multi_pixels_fat, axis=1)
+    # stds_meat = np.std(multi_pixels_meat, axis=1)
 
     cov_fat = np.cov(multi_pixels_fat)
     cov_meat = np.cov(multi_pixels_meat)
@@ -80,7 +80,7 @@ for train_day in days:
         im_multi = sio.loadmat(f'multispectral_day{day}.mat')['immulti']
         im_masks = imio.imread(f'annotation_day{day}.png') == 255
 
-        im_mask_unknown = im_masks[:, :, 0]
+        # im_mask_unknown = im_masks[:, :, 0]
         im_mask_fat = im_masks[:, :, 1]
         im_mask_meat = im_masks[:, :, 2]
         im_mask_salami = np.sum(im_masks, axis=2)
@@ -98,11 +98,11 @@ for train_day in days:
         ax.set_yticklabels([])
         ax.set_xticklabels([])
 
-    fig.suptitle(f'Train day: {train_day}')
+    fig.suptitle(f'Training day: {train_day}')
     plt.show()
 
 matrix = [[rate for day, rate in rates.items()] for train_day, rates in error_rates.items()]
 print('Error table')
-print('\n'.join(['\t'.join([f'{cell:.5f}' if not np.isnan(cell) else "" for cell in row]) for row in matrix]))
+print('\n'.join(['\t'.join([f'{cell:.5f}' if not np.isnan(cell) else "-" for cell in row]) for row in matrix]))
 
 # %%
