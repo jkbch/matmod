@@ -155,13 +155,97 @@ ms_meat = meanStdM(meat_M)
 
 fat_X = findNonZero(fat_M, 0)
 meat_X = findNonZero(meat_M,0)
+def findTreshhold(fat_X, meat_X, img ,plotting):
+    # Returns index and value for treshhold, if plotting is true it
+    # Plots the probabilies
+    x1 = np.min(np.concatenate((fat_X, meat_X)))
+    x2 = np.max(np.concatenate((fat_X, meat_X)))
+    points = np.linspace(x1,x2,200)
+    fat_Y = normalDistribution(points, ms_fat[img,0], ms_fat[img,1])
+    meat_Y = normalDistribution(points, ms_meat[img,0], ms_meat[img,1])
+    if plotting:
+        plt.plot(points, fat_Y)
+        plt.plot(points,meat_Y)
+        plt.show()
+    return points[idx]
 
-points = np.linspace(np.min(np.concatenate((fat_X, meat_X))),np.max(np.concatenate((fat_X, meat_X))),200)
-fat_Y = normalDistribution(points, ms_fat[0,0], ms_fat[0,1])
-meat_Y = normalDistribution(points, ms_meat[0,0], ms_meat[0,1])
-plt.plot(points, fat_Y)
-plt.plot(points,meat_Y)
-plt.show()
-idx = np.argwhere(np.diff(np.sign(fat_Y - meat_Y))).flatten()
-print(points[idx])
+findTreshhold(fat_X, meat_X, 0, True)
+
+def findBestSpectral(annotation, picArray):
+    fat_M = colorArrays(annotation, picArray, 1)
+    meat_M = colorArrays(annotation, picArray, 2)
+    I,J,K = fat_M.shape
+    ms_meat = meanStdM(meat_M)
+    ms_fat = meanStdM(fat_M)
+    succes_vec = []
+    for img in range(K):
+        fat_X = findNonZero(fat_M, img)
+        meat_X = findNonZero(meat_M, img)
+        #meat_Y = normalDistribution(points, ms_meat[img,0], ms_meat[img,1])
+        #fat_Y = normalDistribution(points, ms_fat[img,0], ms_fat[img,1])
+        img_succeses = 0
+        for i in range(len(fat_X)):
+            new_fat_X = np.delete(fat_X, i, 0)
+            mean_new_fat_X = np.mean(new_fat_X)
+            std_new_fat_X = np.std(new_fat_X)
+            x1 = np.min(np.concatenate((new_fat_X, meat_X)))
+            x2 = np.max(np.concatenate((new_fat_X, meat_X)))
+            points = np.linspace(x1,x2,200)
+            new_fat_Y = normalDistribution(points, mean_new_fat_X, std_new_fat_X)
+            meat_Y = normalDistribution(points, ms_meat[img,0], ms_meat[img,1])
+            idx = np.argwhere(np.diff(np.sign(new_fat_Y - meat_Y))).flatten()
+            threshhold = points[idx]
+
+            x_test = fat_X[i]
+            if ms_meat[img,0] > mean_new_fat_X:
+                if x_test < threshhold:
+                    img_succeses += 1
+            else:
+                if x_test > threshhold:
+                    img_succeses += 1
+        for j in range(len(meat_X)): 
+            new_meat_X = np.delete(meat_X, j, 0)
+            mean_new_meat_X = np.mean(new_meat_X)
+            std_new_meat_X = np.std(new_meat_X)
+            x1 = np.min(np.concatenate((fat_X, new_meat_X)))
+            x2 = np.max(np.concatenate((fat_X, new_meat_X)))
+            points = np.linspace(x1,x2,200)
+            new_meat_Y = normalDistribution(points, mean_new_meat_X, std_new_meat_X)
+            fat_Y = normalDistribution(points, ms_fat[img,0], ms_fat[img,1])
+            idx = np.argwhere(np.diff(np.sign(new_meat_Y - fat_Y))).flatten()
+            threshhold = points[idx]
+
+            x_test = meat_X[j]
+            if ms_fat[img,0] > mean_new_meat_X:
+                if x_test < threshhold:
+                    img_succeses += 1
+            else:
+                if x_test > threshhold:
+                    img_succeses += 1
+        succes_vec.append(img_succeses)
+    return np.array((succes_vec))
+
+succes_array = findBestSpectral(annotation, picArray)
+rate = succes_array / (len(fat_X) + len(meat_X))
+print(rate)
+print(rate == max(rate))
+
+#%%
+bestThreshhold = findTreshhold(fat_X, meat_X, 0, False)
+def Classify(pic, threshhold, annotation):
+    classification = np.zeros(pic.shape)
+
+    classification[pic <= threshhold] = 1
+    classification[pic > threshhold] = 2
+    classification[annotation[:,:,0] == 0] = 0
+    classification[annotation[:,:,1]== 255] = 0.5
+    classification[annotation[:,:,2] == 255] = 0.5
+    classification[pic == 0] = 0
+    return classification
+
+classed = Classify(picArray[:,:,0], bestThreshhold, annotation)
+print(classed.shape)
+plt.imshow(classed)
+plt.colorbar()
+plt.show
 # %%
