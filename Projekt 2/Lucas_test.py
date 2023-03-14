@@ -74,6 +74,7 @@ from helpFunctions import getPix
 def plotMulSpec(day):
     str1 = 'multispectral_day' + day + '.mat'
     str2 = 'color_day' + day + '.png'
+    str3 = 'Multispectral Images on day ' + day
     pic = scipy.io.loadmat(str1)
     picArray = pic['immulti']
     count = -1
@@ -95,11 +96,13 @@ def plotMulSpec(day):
                         right=0.5,
                         top=0.9,
                         wspace=0.2,
-                        hspace=0.4) 
+                        hspace=0.4)
+    
     plt.show()
 
 # %%
-plotMulSpec('01')
+plotMulSpec('28')
+
 
 # %%
 annotation = io.imread('annotation_day01.png')
@@ -155,12 +158,13 @@ ms_meat = meanStdM(meat_M)
 
 fat_X = findNonZero(fat_M, 0)
 meat_X = findNonZero(meat_M,0)
+#%%
 def findTreshhold(fat_X, meat_X, img ,plotting):
     # Returns index and value for treshhold, if plotting is true it
     # Plots the probabilies
     x1 = np.min(np.concatenate((fat_X, meat_X)))
     x2 = np.max(np.concatenate((fat_X, meat_X)))
-    points = np.linspace(x1,x2,200)
+    points = np.linspace(x1,x2,500)
     fat_Y = normalDistribution(points, ms_fat[img,0], ms_fat[img,1])
     meat_Y = normalDistribution(points, ms_meat[img,0], ms_meat[img,1])
     if plotting:
@@ -171,6 +175,7 @@ def findTreshhold(fat_X, meat_X, img ,plotting):
 
 findTreshhold(fat_X, meat_X, 0, True)
 
+#%%
 def findBestSpectral(annotation, picArray):
     fat_M = colorArrays(annotation, picArray, 1)
     meat_M = colorArrays(annotation, picArray, 2)
@@ -239,7 +244,7 @@ def Classify(pic, threshhold, annotation):
     classification[pic > threshhold] = 2
     classification[annotation[:,:,0] == 0] = 0
     classification[annotation[:,:,1]== 255] = 0.5
-    classification[annotation[:,:,2] == 255] = 0.5
+    classification[annotation[:,:,2] == 255] = 1.0
     classification[pic == 0] = 0
     return classification
 
