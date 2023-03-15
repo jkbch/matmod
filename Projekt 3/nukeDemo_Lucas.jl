@@ -52,7 +52,8 @@ function solveIP(H, K, display)
     end
     return JuMP.value.(x), JuMP.value.(R)
 end
-function solveIPnewObjective(H, K, display)
+
+function solveIP4(H, K, display)
     h = length(H)
     myModel = Model(Cbc.Optimizer)
     # If your want ot use GLPK instead use:
@@ -71,6 +72,44 @@ function solveIPnewObjective(H, K, display)
     @constraint(myModel, [i=1:h] ,R[i] - H[i] - 10 <= Z[i])
     @constraint(myModel, [i=1:h] ,-R[i] + H[i] + 10 <= Z[i])
 
+
+    optimize!(myModel)
+    if display == true
+        if termination_status(myModel) == MOI.OPTIMAL
+            println("Objective value: ", JuMP.objective_value(myModel))
+            println("x = ", JuMP.value.(x))
+            println("R = ", JuMP.value.(R))
+        else
+            println("Optimize was not succesful. Return code: ", termination_status(myModel))
+        end
+    end
+    return JuMP.value.(x), JuMP.value.(R)
+end
+
+function solveIP5(H, K, display)
+    h = length(H)
+    myModel = Model(Cbc.Optimizer)
+    # If your want ot use GLPK instead use:
+    #myModel = Model(GLPK.Optimizer)
+
+    A = constructA(H,K)
+
+    @variable(myModel, x[1:h], Bin )
+    @variable(myModel, R[1:h] >= 0 )
+    @variable(myModel, Z[1:h] >= 0)
+
+    @objective(myModel, Min, sum(  Z[j] for j=1:h) )
+
+    @constraint(myModel, [j=1:h] ,R[j] >= H[j] + 10 )
+    @constraint(myModel, [i=1:h] ,R[i] == sum(A[i,j]*x[j] for j=1:h) )
+    @constraint(myModel, [i=1:h] ,R[i] - H[i] - 10 <= Z[i])
+    @constraint(myModel, [i=1:h] ,-R[i] + H[i] + 10 <= Z[i])
+
+    @constraint(myModel, [i=2:h-1], x[i] <= 1- x[i-1])
+    @constraint(myModel, [i=2:h-1], x[i] <= 1- x[i+1])
+    @constraint(myModel, x[2] <= 1 - x[1] )
+    @constraint(myModel, x[h-1] <= 1 - x[h])
+
     optimize!(myModel)
     if display == true
         if termination_status(myModel) == MOI.OPTIMAL
@@ -88,16 +127,21 @@ x, R = solveIP(yvals,K, false)
 function iszero(num)
     num != 0
 end
-ybombs = vec(yvals .* x)
-xbombs = vec(xvals .* x)
-filter!(iszero, ybombs)
-filter!(iszero, xbombs)
-scatter!(xbombs, ybombs, markerstrokewidth = 1, label = "Første gang")
+#ybombs = vec(yvals .* x)
+#xbombs = vec(xvals .* x)
+#filter!(iszero, ybombs)
+#filter!(iszero, xbombs)
+#scatter!(xbombs, ybombs, markerstrokewidth = 1, label = "Første gang")
 
-x_new, R_new = solveIPnewObjective(yvals, K, true)
+x_new, R_new = solveIP4(yvals, K, true)
 # https://optimization.cbe.cornell.edu/index.php?title=Optimization_with_absolute_values
 ybombs_new = vec(yvals .* x_new)
 xbombs_new = vec(xvals .* x_new)
 filter!(iszero, ybombs_new)
 filter!(iszero, xbombs_new)
 scatter!(xbombs_new, ybombs_new, markerstrokewidth = 1, label = "Anden gang")
+x_5, R_5 = solveIP4(yvals, K, true)
+
+scatter(xvals,R, label = "Basis")
+scatter!(xvals, R_new, label = "Opgave 4")
+scatter!(xvals, R_5, label = "Opgave 5")
