@@ -1,4 +1,4 @@
-using DelimitedFiles, Plots, LinearSolve, Polynomials
+using DelimitedFiles, Plots, LinearSolve
 
 function findDistanceKM(matrix)
     R = 6371
@@ -23,25 +23,7 @@ function accDist(dist)
     end
     return acc 
 end
-function LagrangeInterp1D( fvals, xnodes, barw, t )
-    numt = 0
-    denomt = 0
 
-    for j in eachindex(xnodes)
-        tdiff = t - xnodes[j]
-        numt = numt + barw[j] / tdiff * fvals[j]
-        denomt = denomt + barw[j] / tdiff
-
-        if ( abs(tdiff) < 1e-15 )
-            numt = fvals[j]
-            denomt = 1.0
-            break
-        end
-    end
-
-    return numt / denomt
-
-end
 function PolyFit(xvals, yvals, degree)
     # Returns the coefficients of a polylonial of degree lenght(x) - 1
     a = length(xvals)
