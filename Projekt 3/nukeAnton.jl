@@ -13,22 +13,24 @@ K = [
 
 
 function constructA(H,K)
-    zeros(size(H),size(H))
-    return A
-end
+   A = zeros(Float64,length(H),length(H))
 
-# A should be structured as follows
-A = [300.0  140.0   40.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0
-     140.0  300.0  140.0   40.0    0.0    0.0    0.0    0.0    0.0    0.0
-      40.0  140.0  300.0  140.0   40.0    0.0    0.0    0.0    0.0    0.0
-       0.0   40.0  140.0  300.0  140.0   40.0    0.0    0.0    0.0    0.0
-       0.0    0.0   40.0  140.0  300.0  140.0   40.0    0.0    0.0    0.0
-       0.0    0.0    0.0   40.0  140.0  300.0  140.0   40.0    0.0    0.0
-       0.0    0.0    0.0    0.0   40.0  140.0  300.0  140.0   40.0    0.0
-       0.0    0.0    0.0    0.0    0.0   40.0  140.0  300.0  140.0   40.0
-       0.0    0.0    0.0    0.0    0.0    0.0   40.0  140.0  300.0  140.0
-       0.0    0.0    0.0    0.0    0.0    0.0    0.0   40.0  140.0  300.0
-]
+   for i in 3:length(H)-2
+    A[i-2,i] = 40;
+    A[i-1,i] = 140;
+    A[i,i] = 300;
+    A[i+1,i] = 140;
+    A[i+2,i] = 40;
+    return A
+    A[length(H)-2,length(H)] = 40;
+    A[length(H)-1,length(H)] = 140;
+    A[length(H),length(H)] = 300;
+    A[1,1] = 300;
+    A[2,1] = 140;
+    A[3,1] = 40;
+   end
+   return A
+end
 
 
 function solveIP(H, K)
@@ -58,4 +60,5 @@ function solveIP(H, K)
     end
 end
 
+A = constructA(H,K)
 solveIP(H,K)
