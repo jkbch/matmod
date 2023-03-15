@@ -64,6 +64,14 @@ accDist = accummulatedDist(dist,matrix);
 f = fit(accDist,matrix[:,3],9);
 
 x = linSpace(0.25,maximum(accDist))
+#ys = zeros(Float64,length(x))
+#for i in eachindex(x)
+ #   ys[i] = f(x[i])
+#end
 
-plot(accDist, matrix[:,3], linewidth=4, label="Data")
-plot!(f, extrema(x)...,linewidth=4, label="Fit")
+ys = @.f(x)
+
+#plot(accDist, matrix[:,3], linewidth=4, label="Data")
+#plot!(x,ys,linewidth=4, label="Fit")
+
+#plot!(f, extrema(x)...,linewidth=4, label="Fit")
