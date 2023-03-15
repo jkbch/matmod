@@ -5,20 +5,20 @@ function findDistanceKM(matrix)
     a,b = size(matrix)
     dist = zeros(a,1)
     for i in 1:a-1
-        phi1 = matrix[i,1]
-        phi2 = matrix[i+1,1]
-        lambda1 = matrix[i,2]
-        lambda2 = matrix[i+1,2]
-        delta_lambda = (lambda2 - lambda1) * pi / 180
-        delta_phi = (phi2 - phi1) * pi / 180
-        Hav = sin(delta_phi / 2)^2 + cos(phi1) * cos(phi2) * sin(delta_lambda)^2
+        phi1 = matrix[i,1] * pi/180
+        phi2 = matrix[i+1,1] * pi/180
+        lambda1 = matrix[i,2] * pi / 180
+        lambda2 = matrix[i+1,2] * pi / 180
+        delta_lambda = (lambda2 - lambda1)
+        delta_phi = (phi2 - phi1)
+        Hav = sin(delta_phi / 2)^2 + cos(phi1) * cos(phi2) * sin(delta_lambda/2)^2
         dist[i+1] = R * (2 * atan(sqrt(Hav), sqrt(1 - Hav)))
     end
     return dist
 end
 function accDist(dist)
-    acc = zeros(1,length(dist))
-    for i in 2:length(dist)
+    acc = zeros(1,lastindex(dist))
+    for i in 2:lastindex(dist)
         acc[i] = acc[i-1] + dist[i]
     end
     return acc 
@@ -64,16 +64,12 @@ function evalPoly(xvals, poly)
             pot +=1
         end
     end
-    yvals[end-1] = 31.0
-    yvals[end-2] = 31.0
-    yvals[end-3] = 31
-    
     return yvals
 end 
 function createxvals(distanceVector, distance)
     max = findmax(distanceVector)[1]
-    npoints = floor(Int,max / distance)
-    xvals = zeros(Float64,npoints+1)
+    npoints = floor(Int ,max / distance)
+    xvals = zeros(Float64 , npoints+1)
     for i in eachindex(xvals)
         xvals[i] = 0.25 * (i-1)
     end
@@ -86,12 +82,12 @@ matrix = readdlm("channel_data.txt")
 dist = findDistanceKM(matrix);
 height = matrix[:,3]
 accumulatedDist = accDist(dist);
-plot(accumulatedDist', height, label = "Data", linewidth = 2)
+plot(accumulatedDist', height, label = "Data", linewidth = 4)
 xlabel!("Distance (km)")
 ylabel!("Height (m)")
 title!("Height as function of distance")
-
 coef = PolyFit(accumulatedDist, height, 9)
 xvals = createxvals(accumulatedDist, 0.25)
 yvals = evalPoly(xvals, coef)
-plot!(xvals, yvals, label = "Eget Fit")
+plot!(xvals, yvals, label = "Eget Fit", linewidth = 4)
+
