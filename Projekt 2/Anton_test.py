@@ -146,10 +146,8 @@ def find_NonZero(colorIndex,Multispectral,layer):
 def calculate_means(colorIndex,Multispectral):
     
     I,J,K = Multispectral.shape
-    SS = sum(colorIndex)
-    print(SS.shape)
-    print(SS)
-    
+    SS = int(sum(sum(colorIndex)))
+
     mu = np.zeros([K,1])
     sd = np.zeros([K,1])
     nonZeroLayer = np.zeros([SS,K])
@@ -166,7 +164,7 @@ Multispectral = scipy.io.loadmat('Multispectral_day01.mat')
 
 Multispectral = Multispectral['immulti']
 
-print(Multispectral.shape)
+
 
 mu_fat, sd_fat, fat_val = calculate_means(colorPull(annotation,1),Multispectral)
 mu_meat, sd_meat, meat_val = calculate_means(colorPull(annotation,2),Multispectral)
@@ -175,3 +173,24 @@ mu_meat, sd_meat, meat_val = calculate_means(colorPull(annotation,2),Multispectr
 # %%
 # We will now attempt to generate plots
 
+
+
+from scipy.stats import norm
+import statistics
+
+def normalDistribution(x_axis,mu,sd):
+    y =1/(sd*np.sqrt(2*np.pi))*np.exp(-1/2*((x_axis-mu)/sd)**2)
+    return y
+
+k = 10
+x = np.concatenate((fat_val[:,k],meat_val[:,k]))
+x1 = min(x)
+x2 = max(x)
+
+x_axis = np.linspace(x1,x2,200)
+
+plt.plot(x_axis, normalDistribution(x_axis, mu_fat[k], sd_fat[k]))
+plt.show()
+
+
+# %%
