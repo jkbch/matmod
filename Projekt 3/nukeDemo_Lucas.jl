@@ -1,17 +1,7 @@
 using GLPK, Cbc, JuMP, SparseArrays
-
-H = [
-10
-30
-70
-50
-70
-120
-140
-120
-100
-80
-]
+include("Lucas_legetøj.jl")
+print(accumulatedDist)
+# H = yvals
 
 
 K = [
@@ -19,24 +9,26 @@ K = [
 ]
 
 
-function constructA(H,K)
-    # Make a function that returns A when given H and K
+function constructA(yvals,K)
+    n = size(yvals,1)
+    print(n,"\n")
+    A = zeros(Float64,n,n)
+    K2 = [K[3], K[2], K[1], K[2], K[3]]
+    K3 = [K[3], K[2], K[1]]
+    for i in 3:length(yvals) - 2
+        A[i,i-2:i+2] = K2
+    end
+    A[1,1:3] = K
+    A[2,2:4] = K
+    A[2,1] = K[2]
+    A[end, end-2:end] = K3
+    A[end-1, end-3: end-1] = K3
+    A[end-1, end] = K[3]
     return A
 end
 
-# A should be structured as follows
-A = [300.0  140.0   40.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0
-     140.0  300.0  140.0   40.0    0.0    0.0    0.0    0.0    0.0    0.0
-      40.0  140.0  300.0  140.0   40.0    0.0    0.0    0.0    0.0    0.0
-       0.0   40.0  140.0  300.0  140.0   40.0    0.0    0.0    0.0    0.0
-       0.0    0.0   40.0  140.0  300.0  140.0   40.0    0.0    0.0    0.0
-       0.0    0.0    0.0   40.0  140.0  300.0  140.0   40.0    0.0    0.0
-       0.0    0.0    0.0    0.0   40.0  140.0  300.0  140.0   40.0    0.0
-       0.0    0.0    0.0    0.0    0.0   40.0  140.0  300.0  140.0   40.0
-       0.0    0.0    0.0    0.0    0.0    0.0   40.0  140.0  300.0  140.0
-       0.0    0.0    0.0    0.0    0.0    0.0    0.0   40.0  140.0  300.0
-]
-
+A = constructA(yvals,K)
+print(size(A))
 
 function solveIP(H, K)
     h = length(H)
