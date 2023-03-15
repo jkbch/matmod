@@ -27,7 +27,7 @@ function LagrangeInterp1D( fvals, xnodes, barw, t )
     numt = 0
     denomt = 0
 
-    for j = 1 : length( xnodes )
+    for j in eachindex(xnodes)
         tdiff = t - xnodes[j]
         numt = numt + barw[j] / tdiff * fvals[j]
         denomt = denomt + barw[j] / tdiff
