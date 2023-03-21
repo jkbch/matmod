@@ -40,7 +40,7 @@ function solveIP(H, K)
 
     @objective(myModel, Min, sum(x[j] for j=1:h) )
 
-    @constraint(myModel, [j=1:h],R[j] >= H[j] + CHD )
+    @constraint(myModel, [j=1:h],R[j] >= H[j] + 10 )
     @constraint(myModel, [i=1:h],R[i] == sum(A[i,j]*x[j] for j=1:h) )
 
     optimize!(myModel)
@@ -70,10 +70,10 @@ function solveIP2(H, K)
 
     @objective(myModel, Min, sum(Z[j] for j=1:h) )
 
-    @constraint(myModel, [j=1:h], R[j] >= H[j] + CHD )
+    @constraint(myModel, [j=1:h], R[j] >= H[j] + 10 )
     @constraint(myModel, [i=1:h], R[i] == sum(A[i,j]*x[j] for j=1:h) )
-    @constraint(myModel, [i=1:h], R[i] - H[i] - CHD <= Z[i])
-    @constraint(myModel, [i=1:h],-R[i] + H[i] + CHD <= Z[i])
+    @constraint(myModel, [i=1:h], R[i] - H[i] - 10 <= Z[i])
+    @constraint(myModel, [i=1:h],-R[i] + H[i] + 10 <= Z[i])
 
     optimize!(myModel)
 
@@ -102,11 +102,11 @@ function solveIP3(H, K)
 
     @objective(myModel, Min, sum(Z[j] for j=1:h) )
 
-    @constraint(myModel, [j=1:h], R[j] >= H[j] + CHD )
+    @constraint(myModel, [j=1:h], R[j] >= H[j] + 10 )
     @constraint(myModel, [i=1:h], R[i] == sum(A[i,j]*x[j] for j=1:h) )
 
-    @constraint(myModel, [i=1:h], R[i] - H[i] - CHD <= Z[i])
-    @constraint(myModel, [i=1:h],-R[i] + H[i] + CHD <= Z[i])
+    @constraint(myModel, [i=1:h], R[i] - H[i] - 10 <= Z[i])
+    @constraint(myModel, [i=1:h],-R[i] + H[i] + 10 <= Z[i])
 
     @constraint(myModel, [i=1+1:h], x[i] <= 1 - x[i-1])
     @constraint(myModel, [i=1:h-1], x[i] <= 1 - x[i+1])
@@ -143,11 +143,11 @@ function solveIP4(H, K1, K2, K3)
 
     @objective(myModel, Min, sum(Z[j] for j=1:h) )
 
-    @constraint(myModel, [j=1:h], R[j] >= H[j] + CHD )
+    @constraint(myModel, [j=1:h], R[j] >= H[j] + 10 )
     @constraint(myModel, [i=1:h], R[i] == sum(A1[i,j]*x1[j] + A2[i,j]*x2[j]+ A3[i,j]*x3[j] for j=1:h) )
 
-    @constraint(myModel, [i=1:h], R[i] - H[i] - CHD <= Z[i])
-    @constraint(myModel, [i=1:h],-R[i] + H[i] + CHD <= Z[i])
+    @constraint(myModel, [i=1:h], R[i] - H[i] - 10 <= Z[i])
+    @constraint(myModel, [i=1:h],-R[i] + H[i] + 10 <= Z[i])
 
     @constraint(myModel, [i=1+1:h], x1[i] + x2[i] + x3[i] <= 1 - (x1[i-1] + x2[i-1] + x3[i-1]))
     @constraint(myModel, [i=1:h-1], x1[i] + x2[i] + x3[i] <= 1 - (x1[i+1] + x2[i+1] + x3[i+1]))
@@ -179,7 +179,6 @@ heights = channel_data[1:end, 3]
 distances_acc = accumulate(+, distances)
 f = CubicSpline(heights, distances_acc)
 
-CHD = 10
 #D = push!(collect(0:250:distances_acc[end]), distances_acc[end])
 D = collect(0:250:distances_acc[end])
 H = f.(D)
