@@ -139,6 +139,7 @@ function solveIP6(H, K1,K2,K3, display)
     @variable(myModel, x[1:h], Bin )
     @variable(myModel, y[1:h], Bin )
     @variable(myModel, z[1:h], Bin )
+
     @variable(myModel, R[1:h] >= 0 )
     @variable(myModel, Z[1:h] >= 0)
 
@@ -150,21 +151,11 @@ function solveIP6(H, K1,K2,K3, display)
     @constraint(myModel, [i=1:h] ,R[i] - H[i] - 10 <= Z[i])
     @constraint(myModel, [i=1:h] ,-R[i] + H[i] + 10 <= Z[i])
 
-    @constraint(myModel, [i=2:h-1], x[i] <= 1- x[i-1] )
-    @constraint(myModel, [i=2:h-1], x[i] <= 1- x[i+1])
-    @constraint(myModel, x[2] <= 1 - x[1] )
-    @constraint(myModel, x[h-1] <= 1 - x[h])
+    @constraint(myModel, [i=2:h-1], x[i] + y[i] + z[i] <= 1- x[i-1] - y[i-1] - z[i-1] )
+    @constraint(myModel, [i=2:h-1], x[i] + y[i] + z[i] <= 1- x[i+1] - y[i+1] - z[i+1])
+    @constraint(myModel, x[2] + y[2] + z[2] <= 1 - x[1] - y[1] - z[1] )
+    @constraint(myModel, x[h-1] + y[h-1] + z[h-1] <= 1 - x[h] - y[h] - z[h])
 
-    @constraint(myModel, [i=2:h-1], y[i] <= 1- x[i-1])
-    @constraint(myModel, [i=2:h-1], x[i] <= 1- x[i+1])
-    @constraint(myModel, x[2] <= 1 - x[1] )
-    @constraint(myModel, x[h-1] <= 1 - x[h])
-
-    @constraint(myModel, [i=2:h-1], x[i] <= 1- x[i-1])
-    @constraint(myModel, [i=2:h-1], x[i] <= 1- x[i+1])
-    @constraint(myModel, x[2] <= 1 - x[1] )
-    @constraint(myModel, x[h-1] <= 1 - x[h])
-    # Vælg højest 1 type for hver bombe
     @constraint(myModel, [i = 1:h], x[i] + y[i] + z[i] <= 1)
 
     optimize!(myModel)
