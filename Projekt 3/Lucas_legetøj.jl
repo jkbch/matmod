@@ -1,4 +1,4 @@
-using DelimitedFiles, Plots, LinearSolve
+using DelimitedFiles, Plots, LinearSolve, DataInterpolations
 
 function findDistanceKM(matrix)
     R = 6371
@@ -60,16 +60,20 @@ function createxvals(distanceVector, distance)
 end
 
 
+
 matrix = readdlm("channel_data.txt")
 dist = findDistanceKM(matrix);
 height = matrix[:,3]
 accumulatedDist = accDist(dist);
-plot(accumulatedDist', height, label = "Data", linewidth = 4)
+scatter(accumulatedDist', height, label = "Data")
 xlabel!("Distance (km)")
 ylabel!("Height (m)")
 title!("Height as function of distance")
 coef = PolyFit(accumulatedDist, height, 9)
 xvals = createxvals(accumulatedDist, 0.25)
 yvals = evalPoly(xvals, coef)
-plot!(xvals, yvals, label = "Eget Fit", linewidth = 4)
+cubicSplineInterpolation = CubicSpline(height, vec(accumulatedDist))
+yvals_cubic = cubicSplineInterpolation.(xvals)
+#plot!(xvals, yvals, label = "Eget Fit", linewidth = 4)
+plot!(xvals, yvals_cubic, label = "Jakob", linewidth = 3)
 
