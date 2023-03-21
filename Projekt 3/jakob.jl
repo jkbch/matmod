@@ -166,7 +166,6 @@ function solveIP4(H, K1, K2, K3)
 end
 
 channel_data = readdlm("channel_data.txt")
-
 distances = pushfirst!(haversine_distance(
     channel_data[1:end - 1, 1], 
     channel_data[1:end - 1, 2],
@@ -175,11 +174,9 @@ distances = pushfirst!(haversine_distance(
 ), 0)
 
 heights = channel_data[1:end, 3] 
-
 distances_acc = accumulate(+, distances)
 f = CubicSpline(heights, distances_acc)
 
-#D = push!(collect(0:250:distances_acc[end]), distances_acc[end])
 D = collect(0:250:distances_acc[end])
 H = f.(D)
 
@@ -188,6 +185,5 @@ K2 = [500 230 60]
 K3 = [1000 400 70]
 
 x, R = solveIP4(H, K1, K2, K3)
-
 scatter(D[x .== 1], H[x .== 1])
 plot!(f)
