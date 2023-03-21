@@ -1,7 +1,7 @@
 using GLPK,  SparseArrays, Cbc
 using JuMP
 include("Lucas_legetøj.jl")
-function constructA(yvals,K)
+function constructMatrix(yvals,K)
     n = size(yvals,1)
 
     A = zeros(Float64,n,n)
@@ -18,9 +18,12 @@ function constructA(yvals,K)
     A[end-1, end] = K[3]
     return A
 end
+
 K = [
 300 140 40
 ]
+K2 = [500 230 60]
+K3 = [1000 400 70]
 yvals = reshape(yvals, lastindex(yvals), 1)
 print(size(yvals))
 
@@ -30,7 +33,7 @@ function solveIP(H, K, display)
     # If your want ot use GLPK instead use:
     #myModel = Model(GLPK.Optimizer)
 
-    A = constructA(H,K)
+    A = constructMatrix(H,K)
 
     @variable(myModel, x[1:h], Bin )
     @variable(myModel, R[1:h] >= 0 )
@@ -59,7 +62,7 @@ function solveIP4(H, K, display)
     # If your want ot use GLPK instead use:
     #myModel = Model(GLPK.Optimizer)
 
-    A = constructA(H,K)
+    A = constructMatrix(H,K)
 
     @variable(myModel, x[1:h], Bin )
     @variable(myModel, R[1:h] >= 0 )
@@ -92,7 +95,7 @@ function solveIP5(H, K, display)
     # If your want ot use GLPK instead use:
     #myModel = Model(GLPK.Optimizer)
 
-    A = constructA(H,K)
+    A = constructMatrix(H,K)
 
     @variable(myModel, x[1:h], Bin )
     @variable(myModel, R[1:h] >= 0 )
@@ -123,7 +126,62 @@ function solveIP5(H, K, display)
     return JuMP.value.(x), JuMP.value.(R)
 end
 
+function solveIP6(H, K1,K2,K3, display)
+    h = length(H)
+    myModel = Model(Cbc.Optimizer)
+    # If your want ot use GLPK instead use:
+    #myModel = Model(GLPK.Optimizer)
+
+    A = constructMatrix(H,K1)
+    B = constructMatrix(H,K2)
+    C = constructMatrix(H,K3)
+    # Tilføjet flere bomber
+    @variable(myModel, x[1:h], Bin )
+    @variable(myModel, y[1:h], Bin )
+    @variable(myModel, z[1:h], Bin )
+    @variable(myModel, R[1:h] >= 0 )
+    @variable(myModel, Z[1:h] >= 0)
+
+    @objective(myModel, Min, sum(  Z[j] for j=1:h) )
+
+    @constraint(myModel, [j=1:h] ,R[j] >= H[j] + 10 )
+    # Tilføjet flere bomber
+    @constraint(myModel, [i=1:h] ,R[i] == sum(A[i,j]*x[j] + B[i,j]*y[j] + C[i,j]*z[j] for j=1:h) )
+    @constraint(myModel, [i=1:h] ,R[i] - H[i] - 10 <= Z[i])
+    @constraint(myModel, [i=1:h] ,-R[i] + H[i] + 10 <= Z[i])
+
+    @constraint(myModel, [i=2:h-1], x[i] <= 1- x[i-1] )
+    @constraint(myModel, [i=2:h-1], x[i] <= 1- x[i+1])
+    @constraint(myModel, x[2] <= 1 - x[1] )
+    @constraint(myModel, x[h-1] <= 1 - x[h])
+
+    @constraint(myModel, [i=2:h-1], y[i] <= 1- x[i-1])
+    @constraint(myModel, [i=2:h-1], x[i] <= 1- x[i+1])
+    @constraint(myModel, x[2] <= 1 - x[1] )
+    @constraint(myModel, x[h-1] <= 1 - x[h])
+
+    @constraint(myModel, [i=2:h-1], x[i] <= 1- x[i-1])
+    @constraint(myModel, [i=2:h-1], x[i] <= 1- x[i+1])
+    @constraint(myModel, x[2] <= 1 - x[1] )
+    @constraint(myModel, x[h-1] <= 1 - x[h])
+    # Vælg højest 1 type for hver bombe
+    @constraint(myModel, [i = 1:h], x[i] + y[i] + z[i] <= 1)
+
+    optimize!(myModel)
+    if display == true
+        if termination_status(myModel) == MOI.OPTIMAL
+            println("Objective value: ", JuMP.objective_value(myModel))
+            println("x = ", JuMP.value.(x))
+            println("R = ", JuMP.value.(R))
+        else
+            println("Optimize was not succesful. Return code: ", termination_status(myModel))
+        end
+    end
+    return JuMP.value.(x), JuMP.value.(R)
+end
+
 x, R = solveIP(yvals,K, false)
+
 function iszero(num)
     num != 0
 end
@@ -140,8 +198,10 @@ xbombs_new = vec(xvals .* x_new)
 filter!(iszero, ybombs_new)
 filter!(iszero, xbombs_new)
 scatter!(xbombs_new, ybombs_new, markerstrokewidth = 1, label = "Anden gang")
-x_5, R_5 = solveIP4(yvals, K, true)
+x_5, R_5 = solveIP5(yvals, K, true)
+x_6, R_6 = solveIP6(yvals, K, K2, K3, true)
 
-scatter(xvals,R, label = "Basis")
-scatter!(xvals, R_new, label = "Opgave 4")
-scatter!(xvals, R_5, label = "Opgave 5")
+scatter(xvals,R .- yvals, label = "Basis")
+scatter!(xvals, R_new .-yvals, label = "Opgave 4")
+scatter!(xvals, R_5 .-yvals, label = "Opgave 5")
+scatter!(xvals, R_6 .-yvals, label = "Opgave 6")
