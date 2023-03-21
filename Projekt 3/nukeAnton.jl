@@ -107,13 +107,16 @@ function solveIPDialYield(H, K1,K2,K3)
     C = constructA(H,K3)
 
     JuMP.@variable(myModel, x[1:h], Bin )
+    JuMP.@variable(myModel, type1[1:h], Bin )
+    JuMP.@variable(myModel, type2[1:h], Bin )
+    JuMP.@variable(myModel, type3[1:h], Bin )
     JuMP.@variable(myModel, R[1:h] >= 0 )
     JuMP.@variable(myModel, Z[1:h] >= 0 )
 
     JuMP.@objective(myModel, Min, sum(Z[j] for j=1:h) )
 
     JuMP.@constraint(myModel, [j=1:h],R[j] >= H[j] + 10 )
-    JuMP.@constraint(myModel, [i=1:h],R[i] == sum(A[i,j]*x[j] for j=1:h) )
+    JuMP.@constraint(myModel, [i=1:h],R[i] == sum(A[i,j]*x[j]*type1[j]+A[i,j]*x[j]*type2[j]+A[i,j]*x[j]*type3[j] for j=1:h) )
     JuMP.@constraint(myModel, [j=1:h],Z[j]  >= R[j]-H[j]-10 )
     JuMP.@constraint(myModel, [j=1:h],Z[j]  >= -(R[j]-H[j]-10) )
 
@@ -121,6 +124,9 @@ function solveIPDialYield(H, K1,K2,K3)
     JuMP.@constraint(myModel, [j=2:h-1],x[j] <= 1-x[j+1])
     JuMP.@constraint(myModel, x[2] <= 1-x[1])
     JuMP.@constraint(myModel, x[h-1] <= 1-x[h])
+
+
+    JuMP.@constraint(myModel, [j=1:h],x[j] == type1[j]+type2[j]+type3[j] )
 
     optimize!(myModel)
 
@@ -139,7 +145,7 @@ K2 = [500,230,60]
 K3 = [1000,400,70]
 
 A = constructA(H,K)
-Bombs = solveIPSmoothFlow(H,K)
+Bombs = solveIPFlolYield(H,K)
 y_bomb = []
 x_bomb = []
 for i in eachindex(Bombs)
