@@ -124,13 +124,7 @@ function solveIPDialYield(H, K1,K2,K3)
     JuMP.@constraint(myModel, [j=1:h],R[j] >= H[j] + 10 )
     JuMP.@constraint(myModel, [j=1:h],Z[j]  >= R[j]-H[j]-10 )
     JuMP.@constraint(myModel, [j=1:h],Z[j]  >= -(R[j]-H[j]-10) )
-
-
-    JuMP.@constraint(myModel, x[2] <= 1-x[1])
-    JuMP.@constraint(myModel, x[h-1] <= 1-x[h])
-
     
-
     optimize!(myModel)
 
     if termination_status(myModel) == MOI.OPTIMAL
