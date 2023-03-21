@@ -176,11 +176,8 @@ x, R = solveIP(yvals,K, false)
 function iszero(num)
     num != 0
 end
-#ybombs = vec(yvals .* x)
-#xbombs = vec(xvals .* x)
-#filter!(iszero, ybombs)
-#filter!(iszero, xbombs)
-#scatter!(xbombs, ybombs, markerstrokewidth = 1, label = "Første gang")
+
+yvals = yvals_cubic
 
 x_new, R_new = solveIP4(yvals, K, true)
 # https://optimization.cbe.cornell.edu/index.php?title=Optimization_with_absolute_values
@@ -190,9 +187,9 @@ filter!(iszero, ybombs_new)
 filter!(iszero, xbombs_new)
 scatter!(xbombs_new, ybombs_new, markerstrokewidth = 1, label = "Anden gang")
 x_5, R_5 = solveIP5(yvals, K, true)
-x_6, R_6 = solveIP6(yvals, K, K2, K3, true)
+#x_6, R_6 = solveIP6(yvals, K, K2, K3, true)
 
 scatter(xvals,R .- yvals, label = "Basis")
 scatter!(xvals, R_new .-yvals, label = "Opgave 4")
 scatter!(xvals, R_5 .-yvals, label = "Opgave 5")
-scatter!(xvals, R_6 .-yvals, label = "Opgave 6")
+#scatter!(xvals, R_6 .-yvals, label = "Opgave 6")
