@@ -59,11 +59,11 @@ matrix = readdlm("channel_data.txt")
 
 R = 6371;
 dist = findDistance(matrix,R);
-accDist = accummulatedDist(dist,matrix);
+accDistance = accummulatedDist(dist,matrix);
 
-f = fit(accDist,matrix[:,3],9);
+f = fit(accDistance,matrix[:,3],9);
 
-x = linSpace(0.25,maximum(accDist))
+x = linSpace(0.25,maximum(accDistance))
 #ys = zeros(Float64,length(x))
 #for i in eachindex(x)
  #   ys[i] = f(x[i])
