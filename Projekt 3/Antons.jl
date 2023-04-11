@@ -1,4 +1,4 @@
-using GLPK, Cbc, JuMP, SparseArrays, DelimitedFiles, Plots, Polynomials
+using GLPK, Cbc, JuMP, SparseArrays, DelimitedFiles, Plots, Polynomials, DataInterpolations
 
 function findDistance(matrix,R)
     # matrix - matrix of points we want to calculate the distance between
@@ -49,6 +49,16 @@ function linSpace(step,max)
     append!(x,max)
     return x
 end
+function createxvals(distanceVector, distance)
+    max = findmax(distanceVector)[1]
+    npoints = floor(Int ,max / distance)
+    xvals = zeros(Float64 , npoints+1)
+    for i in eachindex(xvals)
+        xvals[i] = 0.25 * (i-1)
+    end
+    append!(xvals, max)
+    return xvals
+end
 
 matrix = readdlm("channel_data.txt")
 #matrix[:,1] = matrix[:,1] .- matrix[1,1];
@@ -60,18 +70,25 @@ matrix = readdlm("channel_data.txt")
 R = 6371;
 dist = findDistance(matrix,R);
 accDistance = accummulatedDist(dist,matrix);
+height = matrix[:,3]
+xvals = createxvals(accDistance, 0.25)
+#xvals = linSpace(0.25,accDistance)
+cubicSplineInterpolation = CubicSpline(height, vec(accDistance))
+yvals_cubic = cubicSplineInterpolation.(xvals)
 
-f = fit(accDistance,matrix[:,3],9);
 
-x = linSpace(0.25,maximum(accDistance))
+plot(xvals, yvals_cubic)
+scatter!(accDistance, matrix[:,3], linewidth=4, label="Data")
+# = fit(accDistance,matrix[:,3],9);
+#x = linSpace(0.25,maximum(accDistance))
 #ys = zeros(Float64,length(x))
 #for i in eachindex(x)
  #   ys[i] = f(x[i])
 #end
 
-ys = @.f(x)
+#ys = @.f(x)
 
-#plot(accDist, matrix[:,3], linewidth=4, label="Data")
+
 #plot!(x,ys,linewidth=4, label="Fit")
 
 #plot!(f, extrema(x)...,linewidth=4, label="Fit")

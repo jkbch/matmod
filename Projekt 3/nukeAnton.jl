@@ -4,14 +4,6 @@ using GLPK, Cbc, JuMP, SparseArrays
 
 include("Antons.jl")
 
-H = ys
-
-
-K = [
-300 140 40
-]
-
-
 function constructA(H,K)
    A = zeros(Float64,length(H),length(H))
 
@@ -61,7 +53,40 @@ function solveIP(H, K)
         println("Optimize was not succesful. Return code: ", termination_status(myModel))
     end
 end
-function solveIPSmoothFlow(H, K)
+
+function solveIP4(H, K, display) # Stkålet fra Lukas
+    h = length(H)
+    myModel = Model(Cbc.Optimizer)
+    # If your want ot use GLPK instead use:
+    #myModel = Model(GLPK.Optimizer)
+
+    A = constructMatrix(H,K)
+
+    @variable(myModel, x[1:h], Bin )
+    @variable(myModel, R[1:h] >= 0 )
+    @variable(myModel, Z[1:h] >= 0)
+
+    @objective(myModel, Min, sum(  Z[j] for j=1:h) )
+
+    @constraint(myModel, [j=1:h] ,R[j] >= H[j] + 10 )
+    @constraint(myModel, [i=1:h] ,R[i] == sum(A[i,j]*x[j] for j=1:h) )
+    @constraint(myModel, [i=1:h] ,R[i] - H[i] - 10 <= Z[i])
+    @constraint(myModel, [i=1:h] ,-R[i] + H[i] + 10 <= Z[i])
+
+
+    optimize!(myModel)
+    if display == true
+        if termination_status(myModel) == MOI.OPTIMAL
+            println("Objective value: ", JuMP.objective_value(myModel))
+            println("x = ", JuMP.value.(x))
+            println("R = ", JuMP.value.(R))
+        else
+            println("Optimize was not succesful. Return code: ", termination_status(myModel))
+        end
+    end
+    return JuMP.value.(x), JuMP.value.(R)
+end
+function solveIPSmoothFlow(H, K) # Løser opgave 5
     h = length(H)
     myModel = Model(Cbc.Optimizer)
     # If your want ot use GLPK instead use:
@@ -96,7 +121,8 @@ function solveIPSmoothFlow(H, K)
         println("Optimize was not succesful. Return code: ", termination_status(myModel))
     end
 end
-function solveIPDialYield(H, K1,K2,K3)
+
+function solveIPDialYield(H, K1,K2,K3) # Forsøger at løse opgave 6
     h = length(H)
     myModel = Model(Cbc.Optimizer)
     # If your want ot use GLPK instead use:
@@ -117,14 +143,12 @@ function solveIPDialYield(H, K1,K2,K3)
     JuMP.@constraint(myModel, [j=1:h], 1 >= x[j]+y[j]+z[j])
     JuMP.@constraint(myModel, [j=2:h], x[j]+y[j]+z[j]  <= 1-x[j-1] -y[j-1] -z[j-1])
 
-    JuMP.@constraint(myModel, [i=1:h],R[i] == sum(A[i,j]*x[j] for j=1:h) )
-    JuMP.@constraint(myModel, [i=1:h],R[i] == sum(B[i,j]*y[j] for j=1:h) )
-    JuMP.@constraint(myModel, [i=1:h],R[i] == sum(C[i,j]*z[j] for j=1:h) )
+    JuMP.@constraint(myModel, [i=1:h],R[i] == sum(A[i,j]*x[j] + B[i,j]*y[j] + C[i,j]*z[j] for j=1:h) )
 
     JuMP.@constraint(myModel, [j=1:h],R[j] >= H[j] + 10 )
     JuMP.@constraint(myModel, [j=1:h],Z[j]  >= R[j]-H[j]-10 )
     JuMP.@constraint(myModel, [j=1:h],Z[j]  >= -(R[j]-H[j]-10) )
-    
+
     optimize!(myModel)
 
     if termination_status(myModel) == MOI.OPTIMAL
@@ -137,21 +161,23 @@ function solveIPDialYield(H, K1,K2,K3)
     end
 end
 
+H = yvals_cubic
 K1 = [300,140,40]
 K2 = [500,230,60]
 K3 = [1000,400,70]
 
 #A = constructA(H,K1)
 #Bombs = solveIPDialYield(H,K1,K2,K3)
-Bombs = solveIPDialYield(H,K1,K2,K3)
+Bombs = solveIPSmoothFlow(H,K1)
 y_bomb = []
 x_bomb = []
 for i in eachindex(Bombs)
     if Bombs[i] == 1
-        append!(y_bomb,ys[i])
-        append!(x_bomb,x[i])
+        append!(y_bomb,H[i])
+        append!(x_bomb,xvals[i])
     end
 end
 
 plot(accDistance, matrix[:,3], linewidth=4, label="Data")
 scatter!(x_bomb,y_bomb)
+sum(Bombs)
