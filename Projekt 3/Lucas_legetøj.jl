@@ -75,5 +75,5 @@ yvals = evalPoly(xvals, coef)
 cubicSplineInterpolation = CubicSpline(height, vec(accumulatedDist))
 yvals_cubic = cubicSplineInterpolation.(xvals)
 #plot!(xvals, yvals, label = "Eget Fit", linewidth = 4)
-plot!(xvals, yvals_cubic, label = "Jakob", linewidth = 3)
+plot!(xvals, yvals_cubic, label = "Cubic Spline fit", linewidth = 2)
 
