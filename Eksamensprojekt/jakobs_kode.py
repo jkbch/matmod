@@ -67,7 +67,6 @@ def paralleltomo(N, theta=None, p=None, d=None):
     vals = np.copy(rows)
     idxend = 0
 
-
     # Loop over the chosen angles.
     for i in range(0,nA):
                 
@@ -82,7 +81,6 @@ def paralleltomo(N, theta=None, p=None, d=None):
         
         # Loop over the rays.
         for j in range(0,p):
-            
             # Use the parametrisation of line to get the y-coordinates of
             # intersections with x = k, i.e. x constant.
             tx = (x - x0theta[j,0])/a
@@ -149,7 +147,6 @@ def paralleltomo(N, theta=None, p=None, d=None):
                     rows[idx,0] = i*p + j
                     cols[idx,0] = col[0,:]
                     vals[idx,0] = d  
-
 
     # Truncate excess zeros.
     rows = rows[0:idxend]
