@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.sparse import csr_matrix
 from skimage.measure import block_reduce
+from skimage.morphology import disk
 
 im = np.load("testImage.npy")
 
@@ -235,6 +236,46 @@ for i in range(1,32+1):
     plt.title(str(i))
 plt.show()
 
+# %% 
+[_, mu_wood, mu_iron, mu_bismuth] = np.unique(im)
+
+r_wood = 2500
+r_bullets = [10, 20, 30, 40, 50]
+
+N_sim = r_wood * 2 + 1
+im_sim = disk(r_wood) * mu_wood
+
+for r_bullet in r_bullets:
+    im_iron = disk(r_bullet) * mu_iron
+    im_bismuth = disk(r_bullet) * mu_bismuth
+
+    im_iron[im_iron == 0] = mu_wood
+    im_bismuth[im_bismuth == 0] = mu_wood
+
+    x_iron = np.random.randint(N_sim)
+    y_iron = np.random.randint(N_sim)
+
+    x_bismuth = np.random.randint(N_sim)
+    y_bismuth = np.random.randint(N_sim)
+
+    is_iron_in_wood = np.sqrt((x_iron - r_wood)**2 + (y_iron - r_wood)**2) < r_wood - r_bullet
+    is_bismuth_in_wood = np.sqrt((x_bismuth - r_wood)**2 + (y_bismuth - r_wood)**2) < r_wood - r_bullet
+
+    while not is_iron_in_wood:
+        x_iron = np.random.randint(N_sim)
+        y_iron = np.random.randint(N_sim)
+        is_iron_in_wood = np.sqrt((x_iron - r_wood)**2 + (y_iron - r_wood)**2) < r_wood - r_bullet
+
+    while not is_bismuth_in_wood:
+        x_bismuth = np.random.randint(N_sim)
+        y_bismuth = np.random.randint(N_sim)
+        is_bismuth_in_wood = np.sqrt((x_bismuth - r_wood)**2 + (y_bismuth - r_wood)**2) < r_wood - r_bullet
+    
+    im_sim[x_iron-r_bullet-1:x_iron+r_bullet, y_iron-r_bullet-1:y_iron+r_bullet] = im_iron
+    im_sim[x_bismuth-r_bullet-1:x_bismuth+r_bullet, y_bismuth-r_bullet-1:y_bismuth+r_bullet] = im_bismuth
+
+
+
+
+
 # %%
-
-
