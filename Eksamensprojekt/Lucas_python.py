@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.sparse import csr_matrix
 from skimage.measure import block_reduce
 from skimage.morphology import disk
+from skimage.util import random_noise
 import scipy.io
 
 im = np.load("testImage.npy")
@@ -171,7 +172,8 @@ def paralleltomo(N, theta=None, p=None, d=None):
     return [A, theta, p, d]
 
 # %% Downscale image
-im_downscaled = block_reduce(im, 200)
+factor = 100
+im_downscaled = block_reduce(im, factor)
 plt.imshow(im_downscaled)
 
 # %% Find projections b
@@ -184,10 +186,10 @@ b = A @ x
 x_reconstructed = np.linalg.lstsq(A, b, rcond=None)[0]
 im_reconstructed = x_reconstructed.reshape(N, N)
 plt.imshow(im_reconstructed)
-
+print(im_reconstructed)
 # %% Reconstruct image with normal distributed noise
-b_noise = np.random.normal(0, 1, b.shape[0])
-b_noised = b + b_noise
+noisemap = np.multiply(np.ones(b.shape) * (np.mean(b)), b > 0)
+b_noised = b + (np.random.poisson(noisemap) / 20)
 x_noised_reconstructed = np.linalg.lstsq(A, b_noised, rcond=None)[0]
 im_noised_reconstructed = x_noised_reconstructed.reshape(N, N)
 plt.imshow(im_noised_reconstructed)
