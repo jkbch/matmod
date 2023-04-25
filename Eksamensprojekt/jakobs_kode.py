@@ -1,10 +1,11 @@
-# %% Import
+# %% Load libraies and the given paralleltomo function
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.sparse import csr_matrix
 from skimage.measure import block_reduce
 
-# %% Functions
+im = np.load("testImage.npy")
+
 def paralleltomo(N, theta=None, p=None, d=None):
     """
     PARALLELTOMO Creates a 2D tomography system matrix using parallel beams
@@ -35,6 +36,15 @@ def paralleltomo(N, theta=None, p=None, d=None):
       d           The distance between the first and the last ray.
     
     See also: fanbeamtomo, seismictomo.
+
+    Anders Nymark Christensen, 20180216, DTU Compute
+
+    Revised from the matlab version by:    
+    Jakob Sauer Jørgensen, Maria Saxild-Hansen and Per Christian Hansen,
+    October 1, 201r, DTU Compute.
+
+    Reference: A. C. Kak and M. Slaney, Principles of Computerized 
+    Tomographic Imaging, SIAM, Philadelphia, 2001.
     """
 
     # Default value of the angles theta.
@@ -156,18 +166,16 @@ def paralleltomo(N, theta=None, p=None, d=None):
     # Create sparse matrix A from the stored values.
     A = csr_matrix((vals[:,0].astype(float), (np.squeeze(np.array(rows[:,0]).astype(int)), np.squeeze(np.array(cols[:,0]).astype(int)))), dtype=float, shape=(p*nA, N**2)).toarray()
 
-    
     return [A, theta, p, d]
 
 # %% Downscale image
-im = np.load("testImage.npy")
-im_downscaled = block_reduce(im, 100)
+im_downscaled = block_reduce(im, 200)
 plt.imshow(im_downscaled)
 
 # %% Find projections b
 N = im_downscaled.shape[0]
 x = im_downscaled.flatten()
-[A, theta, p, d] = paralleltomo(N)
+[A, theta, p, d] = paralleltomo(N, np.matrix(np.arange(0.,180.,1.)))
 b = A @ x
 
 # %% Reconstruct image
@@ -182,4 +190,51 @@ x_noised_reconstructed = np.linalg.lstsq(A, b_noised, rcond=None)[0]
 im_noised_reconstructed = x_noised_reconstructed.reshape(N, N)
 plt.imshow(im_noised_reconstructed)
 
+# %% Energies and Resolution
+print(f'Resolution: N = (0.5 * 1000) / 2 = {(0.5 * 100) / (1 / 10)}')
+
+# We use 60KeV x-ray sources
+# 0.1844 (cm^2 / g) with 60 KeV from https://jwoodscience.springeropen.com/articles/10.1007/s10086-013-1381-z
+mass_attenuation_coefficient_wood = 0.1844
+
+# 1.205 (cm^2 / g) with 60 KeV from https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z26.html
+mass_attenuation_coefficient_iron = 1.205
+
+# 5.233 (cm^2 / g) with 60 KeV from https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z83.html
+mass_attenuation_coefficient_bismuth = 5.233
+
+# We can see there use 100 KeV x-ray sources in the test data from
+# https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z26.html
+print("Attenuation values", np.unique(im))
+
+# %% Downscale test
+fig = plt.figure(dpi=200)
+for i in range(1,32+1):
+    plt.subplot(4, 8, i)
+    plt.imshow(block_reduce(im, i*10))
+    plt.axis('off')
+    plt.title(str(i*10), )
+plt.show()
+
+# %% Degree test
+im_downscaled = block_reduce(im, 100)
+N = im_downscaled.shape[0]
+x = im_downscaled.flatten()
+plt.imshow(im_downscaled)
+
+fig = plt.figure(dpi=200)
+for i in range(1,32+1):
+    [A, theta, p, d] = paralleltomo(N, np.matrix(np.arange(0.,180.,i)))
+    b = A @ x
+    x_reconstructed = np.linalg.lstsq(A, b, rcond=None)[0]
+    im_reconstructed = x_reconstructed.reshape(N, N)
+
+    plt.subplot(4, 8, i)
+    plt.imshow(im_reconstructed)
+    plt.axis('off')
+    plt.title(str(i))
+plt.show()
+
 # %%
+
+
