@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.sparse import csr_matrix
 from skimage.measure import block_reduce
+from skimage.morphology import disk
 
 im = np.load("testImage.npy")
 
@@ -195,13 +196,13 @@ print(f'Resolution: N = (0.5 * 1000) / 2 = {(0.5 * 100) / (1 / 10)}')
 
 # We use 60KeV x-ray sources
 # 0.1844 (cm^2 / g) with 60 KeV from https://jwoodscience.springeropen.com/articles/10.1007/s10086-013-1381-z
-mass_attenuation_coefficient_wood = 0.1844
+mu_wood = 0.1844
 
 # 1.205 (cm^2 / g) with 60 KeV from https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z26.html
-mass_attenuation_coefficient_iron = 1.205
+mu_iron = 1.205
 
 # 5.233 (cm^2 / g) with 60 KeV from https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z83.html
-mass_attenuation_coefficient_bismuth = 5.233
+mu_bismuth = 5.233
 
 # We can see there use 100 KeV x-ray sources in the test data from
 # https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z26.html
@@ -235,6 +236,46 @@ for i in range(1,32+1):
     plt.title(str(i))
 plt.show()
 
+# %% Simulated test data
+[_, mu_wood, mu_iron, mu_bismuth] = np.unique(im)
+
+r_log = 2500
+r_bullets = [10, 20, 30, 40, 50]
+
+N_sim = r_log * 2 + 1
+im_sim = disk(r_log) * mu_wood
+
+for r_bullet in r_bullets:
+    im_iron = disk(r_bullet) * mu_iron
+    im_bismuth = disk(r_bullet) * mu_bismuth
+
+    im_iron[im_iron == 0] = mu_wood
+    im_bismuth[im_bismuth == 0] = mu_wood
+
+    x_iron = np.random.randint(N_sim)
+    y_iron = np.random.randint(N_sim)
+
+    x_bismuth = np.random.randint(N_sim)
+    y_bismuth = np.random.randint(N_sim)
+
+    is_iron_inside_log = np.sqrt((x_iron - r_log)**2 + (y_iron - r_log)**2) < r_log - r_bullet
+    is_bismuth_inside_log = np.sqrt((x_bismuth - r_log)**2 + (y_bismuth - r_log)**2) < r_log - r_bullet
+
+    while not is_iron_inside_log:
+        x_iron = np.random.randint(N_sim)
+        y_iron = np.random.randint(N_sim)
+        is_iron_inside_log = np.sqrt((x_iron - r_log)**2 + (y_iron - r_log)**2) < r_log - r_bullet
+
+    while not is_bismuth_inside_log:
+        x_bismuth = np.random.randint(N_sim)
+        y_bismuth = np.random.randint(N_sim)
+        is_bismuth_inside_log = np.sqrt((x_bismuth - r_log)**2 + (y_bismuth - r_log)**2) < r_log - r_bullet
+    
+    im_sim[x_iron-r_bullet-1:x_iron+r_bullet, y_iron-r_bullet-1:y_iron+r_bullet] = im_iron
+    im_sim[x_bismuth-r_bullet-1:x_bismuth+r_bullet, y_bismuth-r_bullet-1:y_bismuth+r_bullet] = im_bismuth
+
+plt.imshow(im_sim)
+
+
+
 # %%
-
-
