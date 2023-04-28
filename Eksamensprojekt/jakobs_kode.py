@@ -316,6 +316,8 @@ def detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis):
     
     return (boxes_iron, boxes_bis)
 
+im_ori = np.load("testImage.npy")
+
 # %% Generate image
 # 0.1844 (cm^2 / g) with 60 KeV from https://jwoodscience.springeropen.com/articles/10.1007/s10086-013-1381-z
 mu_wood = 0.1844
@@ -326,7 +328,6 @@ mu_iron = 1.205
 # 5.233 (cm^2 / g) with 60 KeV from https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z83.html
 mu_bis = 5.233
 
-im_ori = np.load("testImage.npy")
 # [_, mu_wood, mu_iron, mu_bismuth] = np.unique(im_ori)
 
 # Radius for wood log and bullets
@@ -336,24 +337,10 @@ r_bullets = [10, 20, 30, 40, 50]
 im = generate_image(r_log, r_bullets, mu_wood, mu_iron, mu_bis)
 plt.imshow(im)
 
-# %% Test best degree on image
-im_sca = scale_image(im, 0.01)
-fig = plt.figure(dpi=200)
-
-for i in range(1,32+1):
-    degrees = np.arange(0.,180.,i)
-    im_rec = reconstruct_image(im_sca, degrees)
-
-    plt.subplot(4, 8, i)
-    plt.imshow(im_rec)
-    plt.axis('off')
-    plt.title(str(i))
-plt.show()
-
 # %% Reconstruct with optimal degree
 degrees = np.arange(0.,180.,5.)
-im_sca = scale_image(im, 0.01)
-noise_scale = None
+im_sca = scale_image(im, 0.05)
+noise_scale = 0.01
 
 im_rec = reconstruct_image(im_sca, degrees, noise_scale)
 
@@ -372,136 +359,28 @@ for ((x1,y1), (x2,y2), n) in boxes_iron:
     width = x2 - x1
     height = y2 - y1
 
-    rec = Rectangle((y1, x1), width, height, linewidth=1, edgecolor='white', facecolor='none')
+    rec = Rectangle((y1-1, x1-1), width+2, height+2, linewidth=1, edgecolor='white', facecolor='none')
     ax.add_patch(rec)
 
 for ((x1,y1), (x2,y2), n) in boxes_bis:
     width = x2 - x1
     height = y2 - y1
 
-    rec = Rectangle((y1, x1), width, height, linewidth=1, edgecolor='red', facecolor='none')
+    rec = Rectangle((y1-1, x1-1), width+2, height+2, linewidth=1, edgecolor='red', facecolor='none')
     ax.add_patch(rec)
 
 plt.show()
 
+# %% Test best degree on image
+im_sca = scale_image(im, 0.01)
+fig = plt.figure(dpi=200)
 
-# # %% Downscale image
-# im = np.load("testImage.npy")
-# im_downscaled = block_reduce(im, 100)
-# plt.imshow(im_downscaled)
+for i in range(1,32+1):
+    degrees = np.arange(0.,180.,i)
+    im_rec = reconstruct_image(im_sca, degrees)
 
-# # %% Find projections b
-# N = im_downscaled.shape[0]
-# x = im_downscaled.flatten()
-# A, theta, p, d = paralleltomo(N, np.matrix(np.arange(0.,180.,1.)))
-# b = A @ x
-
-# # %% Reconstruct image
-# x_reconstructed = np.linalg.lstsq(A, b, rcond=None)[0]
-# im_reconstructed = x_reconstructed.reshape(N, N)
-# plt.imshow(im_reconstructed)
-
-# # %% Reconstruct image with normal distributed noise
-# b_noise = np.random.normal(0, 1, b.shape[0])
-# b_noised = b + b_noise
-# x_noised_reconstructed = np.linalg.lstsq(A, b_noised, rcond=None)[0]
-# im_noised_reconstructed = x_noised_reconstructed.reshape(N, N)
-# plt.imshow(im_noised_reconstructed)
-
-# # %% Energies and Resolution
-# print(f'Resolution: N = (0.5 * 1000) / 2 = {(0.5 * 100) / (1 / 10)}')
-
-# # We use 60KeV x-ray sources
-# # 0.1844 (cm^2 / g) with 60 KeV from https://jwoodscience.springeropen.com/articles/10.1007/s10086-013-1381-z
-# mu_wood = 0.1844
-
-# # 1.205 (cm^2 / g) with 60 KeV from https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z26.html
-# mu_iron = 1.205
-
-# # 5.233 (cm^2 / g) with 60 KeV from https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z83.html
-# mu_bismuth = 5.233
-
-# # We can see there use 100 KeV x-ray sources in the test data from
-# # https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z26.html
-# print("Attenuation values", np.unique(im))
-
-# # %% Downscale test
-# fig = plt.figure(dpi=200)
-# for i in range(1,32+1):
-#     plt.subplot(4, 8, i)
-#     plt.imshow(block_reduce(im, i*10))
-#     plt.axis('off')
-#     plt.title(str(i*10), )
-# plt.show()
-
-# # %% Degree test
-# im_downscaled = block_reduce(im, 100)
-# N = im_downscaled.shape[0]
-# x = im_downscaled.flatten()
-# plt.imshow(im_downscaled)
-
-# fig = plt.figure(dpi=200)
-# for i in range(1,32+1):
-#     A, theta, p, d = paralleltomo(N, np.matrix(np.arange(0.,180.,i)))
-#     b = A @ x
-#     x_reconstructed = np.linalg.lstsq(A, b, rcond=None)[0]
-#     im_reconstructed = x_reconstructed.reshape(N, N)
-
-#     plt.subplot(4, 8, i)
-#     plt.imshow(im_reconstructed)
-#     plt.axis('off')
-#     plt.title(str(i))
-# plt.show()
-
-# # %% Simulated test data
-# [_, mu_wood, mu_iron, mu_bismuth] = np.unique(im)
-
-# r_log = 2500
-# r_bullets = [10, 20, 30, 40, 50]
-
-# im_sim = disk(r_log) * mu_wood
-# N_sim = r_log*2 + 1
-
-# for r_bullet in r_bullets:
-#     im_iron = disk(r_bullet) * mu_iron
-#     im_bismuth = disk(r_bullet) * mu_bismuth
-
-#     im_iron[im_iron == 0] = mu_wood
-#     im_bismuth[im_bismuth == 0] = mu_wood
-
-#     x_iron = np.random.randint(N_sim)
-#     y_iron = np.random.randint(N_sim)
-
-#     x_bismuth = np.random.randint(N_sim)
-#     y_bismuth = np.random.randint(N_sim)
-
-#     is_iron_inside_log = np.sqrt((x_iron - r_log)**2 + (y_iron - r_log)**2) < r_log - r_bullet
-#     is_bismuth_inside_log = np.sqrt((x_bismuth - r_log)**2 + (y_bismuth - r_log)**2) < r_log - r_bullet
-
-#     while not is_iron_inside_log:
-#         x_iron = np.random.randint(N_sim)
-#         y_iron = np.random.randint(N_sim)
-#         is_iron_inside_log = np.sqrt((x_iron - r_log)**2 + (y_iron - r_log)**2) < r_log - r_bullet
-
-#     while not is_bismuth_inside_log:
-#         x_bismuth = np.random.randint(N_sim)
-#         y_bismuth = np.random.randint(N_sim)
-#         is_bismuth_inside_log = np.sqrt((x_bismuth - r_log)**2 + (y_bismuth - r_log)**2) < r_log - r_bullet
-    
-#     im_sim[x_iron-r_bullet-1:x_iron+r_bullet, y_iron-r_bullet-1:y_iron+r_bullet] = im_iron
-#     im_sim[x_bismuth-r_bullet-1:x_bismuth+r_bullet, y_bismuth-r_bullet-1:y_bismuth+r_bullet] = im_bismuth
-
-# plt.imshow(im_sim)
-
-# # %%
-# delta_iron = 0.01
-# delta_bismuth = 0.01
-
-# im_mask_iron = mu_iron - delta_iron <= im <= mu_iron + delta_iron
-# im_mask_bismuth = mu_bismuth - delta_bismuth <= im <= mu_bismuth + delta_bismuth
-
-# pos_iron = blob_log(im_mask_iron)
-# pos_bismuth = blob_log(im_mask_bismuth)
-
-
-# %%
+    plt.subplot(4, 8, i)
+    plt.imshow(im_rec)
+    plt.axis('off')
+    plt.title(str(i))
+plt.show()
