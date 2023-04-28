@@ -170,14 +170,14 @@ def paralleltomo(N, theta=None, p=None, d=None):
     A = csr_matrix((vals[:,0].astype(float), (np.squeeze(np.array(rows[:,0]).astype(int)), np.squeeze(np.array(cols[:,0]).astype(int)))), dtype=float, shape=(p*nA, N**2)).toarray()
 
     return [A, theta, p, d]
-def findNoisyPixels(typ, b):
+def findNoisyPixels(typ, b, Type):
     if typ == 'iron':
         points = [[14, 14], [14,15], [15,14], [15,15]]
         final_min = 100000
         tmp = 0
         final_max = 0
         for j in range(1000):
-            b_noised = addnoise(b)
+            b_noised = addnoise(b, Type)
             #X_noised = A @ b_noised
             X_noised = np.linalg.lstsq(A, b_noised, rcond=None)[0]
             X = X_noised.reshape(N,N)
@@ -196,7 +196,7 @@ def findNoisyPixels(typ, b):
         points = [[16, 29], [16,30], [17,29], [17,30]]
     points_final = np.empty((1000,1))
     for j in range(1000):
-        b_noised = addnoise(b)
+        b_noised = addnoise(b, Type)
         #X_noised = A @ b_noised
         X_noised = np.linalg.lstsq(A, b_noised, rcond=None)[0]
         X = X_noised.reshape(N,N)
@@ -208,9 +208,12 @@ def findNoisyPixels(typ, b):
         if j % 10 == 0:
             print(f'Nået {(j/1000) * 100} % af vejen' )
     return min(points_final)
-def addnoise(b):
-    noisemap = np.multiply(np.ones(b.shape) * (np.mean(b)), b > 0)
-    b_noised = b + (np.random.poisson(noisemap) / 50)
+def addnoise(b, Type):
+    if Type == 1:
+        noisemap = np.multiply(np.ones(b.shape) * (np.mean(b)), b > 0)
+        b_noised = b + (np.random.poisson(noisemap) / 50)
+    else:
+        b_noised = b + random_noise(b, mode = 'poisson')
     return b_noised
 
 # %% Downscale image
@@ -222,7 +225,7 @@ plt.colorbar()
 # %% Find projections b
 N = im_downscaled.shape[0]
 x = im_downscaled.flatten()
-[A, theta, p, d] = paralleltomo(N, np.matrix(np.arange(0.,180.,1.)))
+[A, theta, p, d] = paralleltomo(N, np.matrix(np.arange(0.,180.,3.)))
 b = A @ x
 
 # %% Reconstruct image
@@ -231,11 +234,19 @@ im_reconstructed = x_reconstructed.reshape(N, N)
 plt.imshow(im_reconstructed)
 print(im_reconstructed)
 # %% Reconstruct image with normal distributed noise
-b_noised = addnoise(b)
+b_noised = addnoise(b, 1)
 x_noised_reconstructed = np.linalg.lstsq(A, b_noised, rcond=None)[0]
 im_noised_reconstructed = x_noised_reconstructed.reshape(N, N)
 plt.imshow(im_noised_reconstructed)
 plt.colorbar()
+
+#%%
+b_pois_noised = b + random_noise(b, mode = 'poisson')
+x_pois_noised_reconstructed = np.linalg.lstsq(A, b_pois_noised, rcond=None)[0]
+im_pois_noised_reconstructed = x_pois_noised_reconstructed.reshape(N, N)
+plt.imshow(im_pois_noised_reconstructed)
+plt.colorbar()
+
 #%%
 print(im_noised_reconstructed[17,30])
 
@@ -287,7 +298,7 @@ for i in range(1,32+1):
 plt.show()
 
 # %%
-mini, maxi = findNoisyPixels('iron', b)
+mini, maxi = findNoisyPixels('iron', b, 2)
 
 # Mindst fundne værdi på Bismuth efter poisson støj er 23.87473342
 
@@ -295,5 +306,5 @@ mini, maxi = findNoisyPixels('iron', b)
 print(mini, maxi)
 
 #%%
-print(findNoisyPixels('bismuth',b))
+print(findNoisyPixels('bismuth',b, 2))
 # %%
