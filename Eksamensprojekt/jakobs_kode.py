@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.sparse import csr_matrix
-from skimage.measure import block_reduce
+from skimage.transform import rescale
 from skimage.morphology import disk
 
 def paralleltomo(N, theta=None, p=None, d=None):
@@ -167,73 +167,80 @@ def paralleltomo(N, theta=None, p=None, d=None):
 
     return (A, theta, p, d)
 
-def reconstruct_im(im, degrees, downscale_factor=None, poisson_noise_lambda=None, poisson_noise_scale=None):
-    if downscale_factor is not None:
-        im = block_reduce(im, downscale_factor)
+def reconstruct(im, degrees, im_scale=None, noise_scale=None):
+    if im_scale is not None:
+        im = scale(im, im_scale)
 
     N = im.shape[0]
     x = im.flatten()
-    A, _, _, _ = paralleltomo(N, np.matrix(degrees))
+    (A, _, _, _) = paralleltomo(N, np.matrix(degrees))
     b = A @ x
 
-    # Determine unique values in image & calculate the next power of two
-    # vals = len(np.unique(im))
-    # vals = 2 ** np.ceil(np.log2(vals))
+    if noise_scale is not None:
+        b += noise(b, noise_scale)
 
-    # Generating noise for each unique value in image.
-    # out = rng.poisson(im * vals) / float(vals)
-
-    if poisson_noise_lambda is not None:
-        b_noise = poisson_noise_scale * np.random.poisson(poisson_noise_lambda, b.shape[0])
-        b += b_noise
-    
     x_recon = np.linalg.lstsq(A, b, rcond=None)[0]
     im_recon = x_recon.reshape(N, N)
 
     return im_recon
 
-def simulate_im(r_log, r_bullets, mu_wood, mu_iron, mu_bismuth):
+def scale(im, scale):
+    return rescale(im, scale, anti_aliasing=False)
+
+def noise(x, scale):
+    return scale * np.random.poisson(x)
+
+def generate_image(r_log, r_bullets, mu_wood, mu_iron, mu_bismuth):
     im = disk(r_log) * mu_wood
     N = r_log*2 + 1
 
     for r_bullet in r_bullets:
         im_iron = disk(r_bullet) * mu_iron
-        im_bismuth = disk(r_bullet) * mu_bismuth
+        im_bis = disk(r_bullet) * mu_bismuth
 
         im_iron[im_iron == 0] = mu_wood
-        im_bismuth[im_bismuth == 0] = mu_wood
+        im_bis[im_bis == 0] = mu_wood
 
         x_iron = np.random.randint(N)
         y_iron = np.random.randint(N)
 
-        x_bismuth = np.random.randint(N)
-        y_bismuth = np.random.randint(N)
+        x_bis = np.random.randint(N)
+        y_bis = np.random.randint(N)
 
-        is_iron_inside_log = np.sqrt((x_iron - r_log)**2 + (y_iron - r_log)**2) < r_log - r_bullet
-        is_bismuth_inside_log = np.sqrt((x_bismuth - r_log)**2 + (y_bismuth - r_log)**2) < r_log - r_bullet
+        is_iron_in_log = np.sqrt((x_iron - r_log)**2 + (y_iron - r_log)**2) < r_log - r_bullet
+        is_bis_in_log = np.sqrt((x_bis - r_log)**2 + (y_bis - r_log)**2) < r_log - r_bullet
 
-        while not is_iron_inside_log:
+        while not is_iron_in_log:
             x_iron = np.random.randint(N)
             y_iron = np.random.randint(N)
-            is_iron_inside_log = np.sqrt((x_iron - r_log)**2 + (y_iron - r_log)**2) < r_log - r_bullet
+            is_iron_in_log = np.sqrt((x_iron - r_log)**2 + (y_iron - r_log)**2) < r_log - r_bullet
 
-        while not is_bismuth_inside_log:
-            x_bismuth = np.random.randint(N)
-            y_bismuth = np.random.randint(N)
-            is_bismuth_inside_log = np.sqrt((x_bismuth - r_log)**2 + (y_bismuth - r_log)**2) < r_log - r_bullet
+        while not is_bis_in_log:
+            x_bis = np.random.randint(N)
+            y_bis = np.random.randint(N)
+            is_bis_in_log = np.sqrt((x_bis - r_log)**2 + (y_bis - r_log)**2) < r_log - r_bullet
         
         im[x_iron-r_bullet-1:x_iron+r_bullet, y_iron-r_bullet-1:y_iron+r_bullet] = im_iron
-        im[x_bismuth-r_bullet-1:x_bismuth+r_bullet, y_bismuth-r_bullet-1:y_bismuth+r_bullet] = im_bismuth
+        im[x_bis-r_bullet-1:x_bis+r_bullet, y_bis-r_bullet-1:y_bis+r_bullet] = im_bis
 
     return im
 
-def detect_bullets(im, mu_iron, mu_bismuth, delta_iron, delta_bismuth):
-    im_mask_iron = mu_iron - delta_iron <= im <= mu_iron + delta_iron
-    im_mask_bismuth = mu_bismuth - delta_bismuth <= im <= mu_bismuth + delta_bismuth
+def detect_bullets(im, mu_iron, mu_bismuth, relative_error_iron, relative_error_bismuth):
+    abs_error_iron = relative_error_iron * mu_iron
+    abs_error_bis = relative_error_bismuth * mu_bismuth
+
+    im_mask_iron = np.logical_and(
+        mu_iron - abs_error_iron <= im, 
+        im <= mu_iron + abs_error_iron
+    )
+    im_mask_bis = np.logical_and(
+        mu_bismuth - abs_error_bis <= im, 
+        im <= mu_bismuth + abs_error_bis
+    )
 
     n = im_mask_iron.shape[0]
     boxes_iron = []
-    boxes_bismuth = []
+    boxes_bis = []
 
     for x in range(n):
         for y in range(n):
@@ -247,7 +254,7 @@ def detect_bullets(im, mu_iron, mu_bismuth, delta_iron, delta_bismuth):
                 ys.push(y)
                 im_mask_iron[x, y] = False
 
-                while queue:
+                while len(queue) > 0:
                     (x, y) = queue.pop()
 
                     if x + 1 < n and im_mask_iron[x+1, y]:
@@ -264,7 +271,7 @@ def detect_bullets(im, mu_iron, mu_bismuth, delta_iron, delta_bismuth):
                 
                 boxes_iron.push((min(xs), min(ys)), (max(xs), max(ys)), len(xs))
             
-            if im_mask_bismuth[x, y]:
+            if im_mask_bis[x, y]:
                 queue = []
                 xs = []
                 ys = []
@@ -272,26 +279,26 @@ def detect_bullets(im, mu_iron, mu_bismuth, delta_iron, delta_bismuth):
                 queue.push((x,y))
                 xs.push(x)
                 ys.push(y)
-                im_mask_bismuth[x, y] = False
+                im_mask_bis[x, y] = False
 
                 while queue:
                     (x, y) = queue.pop()
 
-                    if x+1 < n and im_mask_bismuth[x+1, y]:
+                    if x+1 < n and im_mask_bis[x+1, y]:
                         queue.push((x+1,y))
                         xs.push(x+1)
                         ys.push(y)
-                        im_mask_bismuth[x+1, y] = False
+                        im_mask_bis[x+1, y] = False
 
-                    if y+1 < n and im_mask_bismuth[y+1, y]:
+                    if y+1 < n and im_mask_bis[y+1, y]:
                         queue.push((x,y+1))
                         xs.push(x)
                         ys.push(y+1)
-                        im_mask_bismuth[x, y+1] = False
+                        im_mask_bis[x, y+1] = False
                 
-                boxes_bismuth.push((min(xs), min(ys)), (max(xs), max(ys)), len(xs))
+                boxes_bis.push((min(xs), min(ys)), (max(xs), max(ys)), len(xs))
     
-    return (boxes_iron, boxes_bismuth)
+    return (boxes_iron, boxes_bis)
 
 # %%
 # 0.1844 (cm^2 / g) with 60 KeV from https://jwoodscience.springeropen.com/articles/10.1007/s10086-013-1381-z
@@ -301,18 +308,34 @@ mu_wood = 0.1844
 mu_iron = 1.205
 
 # 5.233 (cm^2 / g) with 60 KeV from https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z83.html
-mu_bismuth = 5.233
+mu_bis = 5.233
+
+im_ori = np.load("testImage.npy")
+# [_, mu_wood, mu_iron, mu_bismuth] = np.unique(im_ori)
 
 # Radius for wood log and bullets
 r_log = 2500
 r_bullets = [10, 20, 30, 40, 50]
 
-im = simulate_im(r_log, r_bullets, mu_wood, mu_iron, mu_bismuth)
+im = generate_image(r_log, r_bullets, mu_wood, mu_iron, mu_bis)
+plt.imshow(im)
 
-degress = np.arange(0.,180.)
-downscale_factor = 100
-poisson_noise_lambda
-im_recon = reconstruct_im(im, degress, downscale_factor, noise_mode)
+
+# %%
+degrees = np.arange(0.,180.,5.)
+im_scale = 0.05
+noise_scale = None
+
+im_recon = reconstruct(im, degrees, im_scale, noise_scale)
+
+plt.imshow(im_recon)
+
+# %%
+rel_error_iron = 0.1
+rel_error_bis = 0.1
+
+detect_bullets(im_recon, mu_iron, mu_bis, rel_error_iron, rel_error_bis)
+
 
 # # %% Downscale image
 # im = np.load("testImage.npy")
@@ -432,3 +455,5 @@ im_recon = reconstruct_im(im, degress, downscale_factor, noise_mode)
 # pos_iron = blob_log(im_mask_iron)
 # pos_bismuth = blob_log(im_mask_bismuth)
 
+
+# %%
