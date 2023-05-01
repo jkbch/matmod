@@ -321,11 +321,11 @@ def detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis):
 
 # %% Find best condition number
 conds = {}
-N = 50
+N = 51
 
 for degree in range(1, 20, 3):
     for p in range(10, 70+1, 10):
-        for d in range(10, p+1, 10):
+        for d in range(p, 70+1, 10):
             print()
             print(N, degree, p, d)
             try:
@@ -338,7 +338,8 @@ for degree in range(1, 20, 3):
                 continue
 
 print(conds)
-print(min(conds, key=conds.get), min(conds))
+key = min(conds, key=conds.get)
+print(key, conds[key])
 exit()
 # %% Generate image
 mu_wood = 1.220
