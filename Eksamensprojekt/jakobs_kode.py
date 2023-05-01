@@ -337,6 +337,8 @@ for degree in range(1, 20, 3):
             except:
                 continue
 
+print(conds)
+exit()
 # %% Generate image
 mu_wood = 1.220
 mu_iron = 449.45
