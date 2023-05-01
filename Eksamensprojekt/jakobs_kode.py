@@ -338,6 +338,7 @@ for degree in range(1, 20, 3):
                 continue
 
 print(conds)
+print(min(d, key=d.get))
 exit()
 # %% Generate image
 mu_wood = 1.220
