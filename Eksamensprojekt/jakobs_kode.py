@@ -156,7 +156,10 @@ def paralleltomo(N, theta=None, p=None, d=None):
                     # Store row numbers, column numbers and values. 
                     rows[idx,0] = i*p + j
                     cols[idx,0] = col[0,:]
-                    vals[idx,0] = d  
+                    vals[idx,0] = d
+
+                    if np.min(cols[:,0]) < 0:
+                        garbage = 1 + 1
 
     # Truncate excess zeros.
     rows = rows[0:idxend]
@@ -168,10 +171,10 @@ def paralleltomo(N, theta=None, p=None, d=None):
 
     return (A, theta, p, d)
 
-def reconstruct_image(im, degrees, noise_scale=None):
+def reconstruct_image(im, theta, p, d, noise_scale=None):
     N = im.shape[0]
     x = im.flatten()
-    (A, _, _, _) = paralleltomo(N, np.matrix(degrees))
+    (A, _, _, _) = paralleltomo(N, np.matrix(theta), p, d)
     b = A @ x
 
     if noise_scale is not None:
@@ -316,33 +319,43 @@ def detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis):
     
     return (boxes_iron, boxes_bis)
 
-im_ori = np.load("testImage.npy")
+# %% Find best condition number
+conds = {}
+N = 50
+
+for degree in range(1, 20, 3):
+    for p in range(10, 70+1, 10):
+        for d in range(10, p+1, 10):
+            print()
+            print(N, degree, p, d)
+            try:
+                theta = np.matrix(np.arange(0., 180., degree))
+                (A, _, _, _) = paralleltomo(N, theta, p, d)
+                cond = np.linalg.cond(A)
+                print(cond)
+                conds[(N, degree, p, d)] = cond
+            except:
+                continue
 
 # %% Generate image
-# 0.1844 (cm^2 / g) with 60 KeV from https://jwoodscience.springeropen.com/articles/10.1007/s10086-013-1381-z
-mu_wood = 0.1844
+mu_wood = 1.220
+mu_iron = 449.45
+mu_bis = 1265.54
 
-# 1.205 (cm^2 / g) with 60 KeV from https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z26.html
-mu_iron = 1.205
+radius_log = 125
+radius_bullet = [0] * 10
 
-# 5.233 (cm^2 / g) with 60 KeV from https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z83.html
-mu_bis = 5.233
-
-# [_, mu_wood, mu_iron, mu_bismuth] = np.unique(im_ori)
-
-# Radius for wood log and bullets
-r_log = 2500
-r_bullets = [10, 20, 30, 40, 50]
-
-im = generate_image(r_log, r_bullets, mu_wood, mu_iron, mu_bis)
+im = generate_image(radius_log, radius_bullet, mu_wood, mu_iron, mu_bis)
+N = im.shape[0]
 plt.imshow(im)
 
 # %% Reconstruct with optimal degree
-degrees = np.arange(0.,180.,5.)
-im_sca = scale_image(im, 0.05)
-noise_scale = 0.01
+theta = np.arange(0.,180.,5.)
+p = N // 4
+d = N
+noise_scale = 0.1
 
-im_rec = reconstruct_image(im_sca, degrees, noise_scale)
+im_rec = reconstruct_image(im, theta, p, d, noise_scale)
 
 plt.imshow(im_rec)
 
@@ -356,15 +369,15 @@ fig, ax = plt.subplots()
 ax.imshow(im_rec)
 
 for ((x1,y1), (x2,y2), n) in boxes_iron:
-    width = x2 - x1
-    height = y2 - y1
+    height = x2 - x1
+    width = y2 - y1
 
     rec = Rectangle((y1-1, x1-1), width+2, height+2, linewidth=1, edgecolor='white', facecolor='none')
     ax.add_patch(rec)
 
 for ((x1,y1), (x2,y2), n) in boxes_bis:
-    width = x2 - x1
-    height = y2 - y1
+    height = x2 - x1
+    width = y2 - y1
 
     rec = Rectangle((y1-1, x1-1), width+2, height+2, linewidth=1, edgecolor='red', facecolor='none')
     ax.add_patch(rec)
@@ -376,11 +389,15 @@ im_sca = scale_image(im, 0.01)
 fig = plt.figure(dpi=200)
 
 for i in range(1,32+1):
-    degrees = np.arange(0.,180.,i)
-    im_rec = reconstruct_image(im_sca, degrees)
+    theta = np.arange(0.,180.,i)
+    im_rec = reconstruct_image(im_sca, theta)
 
     plt.subplot(4, 8, i)
     plt.imshow(im_rec)
     plt.axis('off')
     plt.title(str(i))
 plt.show()
+
+
+
+# %%
