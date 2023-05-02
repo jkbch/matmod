@@ -222,9 +222,7 @@ def generate_image(r_log, r_bullets, mu_wood, mu_iron, mu_bis):
 
     return im[0:N, 0:N]
 
-def detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis, scale_im_to_mu_bis=False):
-    im_scale = scale_im_to_mu_bis (1 + rel_error_bis) * mu_bis / np.max(im_rec) if scale_im_to_mu_bis else 1
-
+def detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale=1):
     abs_error_iron = rel_error_iron * mu_iron
     abs_error_bis = rel_error_bis * mu_bis
 
@@ -335,11 +333,10 @@ im = generate_image(radius_log, radius_bullet, mu_wood, mu_iron, mu_bis)
 plt.imshow(im)
 
 # %% Detect bullets
-rel_error_iron = 0.25
-rel_error_bis = 0.25
-scale_im_to_mu_bis = True
+rel_error_iron = 0.5
+rel_error_bis = 0.5
 
-(boxes_iron, boxes_bis) = detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis, scale_im_to_mu_bis)
+(boxes_iron, boxes_bis) = detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis)
 
 fig, ax = plt.subplots()
 ax.imshow(im)
@@ -376,9 +373,9 @@ print(conds)
 
 # %% Find best parameters for bullect detection
 best_conds = {}
-rel_error_iron = 0.25
-rel_error_bis = 0.25
-scale_im_to_mu_bis = True
+rel_error_iron = 0.5
+rel_error_bis = 0.5
+scale_factor = 1.25
 
 i = 1
 fig = plt.figure(dpi=1200)
@@ -386,11 +383,15 @@ for k, v in islice(conds.items(), 0, None):
     (_, degree, p, d) = k
     theta = np.arange(0., 180., degree)
     im_rec = reconstruct_image(im, theta, p, d)
+    im_scale = scale_factor * mu_bis / np.max(im_rec)
 
-    (boxes_iron, boxes_bis) = detect_bullets(im_rec, mu_iron, mu_bis, rel_error_iron, rel_error_bis, scale_im_to_mu_bis)
+    (boxes_iron, boxes_bis) = detect_bullets(im_rec, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale)
+    print(k, v, (len(boxes_iron), len(boxes_bis)))
 
     if len(boxes_iron) == 10 and len(boxes_bis) == 10:
+        print()
         print(i, k, v, (len(boxes_iron), len(boxes_bis)))
+        print()
         best_conds[k] = v
 
         ax = plt.subplot(4, 8, i)
@@ -412,11 +413,7 @@ for k, v in islice(conds.items(), 0, None):
 print(best_conds)
 plt.show()
 
-# %% Full size image with best parameters
-rel_error_iron = 0.25
-rel_error_bis = 0.25
-scale_im_to_mu_bis = True
-
+# %% Generate full size image
 mu_wood = 1.220
 mu_iron = 449.45
 mu_bis = 1265.54
@@ -424,14 +421,12 @@ mu_bis = 1265.54
 radius_log = 25 * 5
 radius_bullet = [0] * 10
 
-degree = 3
-p = 25 * 5
-d = 40 * 5
-theta = np.arange(0., 180., degree)
-
 im = generate_image(radius_log, radius_bullet, mu_wood, mu_iron, mu_bis)
 
-(boxes_iron, boxes_bis) = detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis, scale_im_to_mu_bis)
+rel_error_iron = 0.5
+rel_error_bis = 0.5
+
+(boxes_iron, boxes_bis) = detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis)
 
 fig, ax = plt.subplots()
 ax.imshow(im)
@@ -446,6 +441,11 @@ print(len(boxes_iron), len(boxes_bis))
 plt.show()
 
 # %% Reconstruct with best parameters and detect bullets
+degree = 4
+p = 35 * 5
+d = 40 * 5
+theta = np.arange(0., 180., degree)
+
 N = im.shape[0]
 x = im.flatten()
 (A, _, _, _) = paralleltomo(N, np.matrix(theta), p, d)
@@ -456,7 +456,11 @@ print(np.linalg.cond(A))
 x_rec = np.linalg.lstsq(A, b, rcond=None)[0]
 im_rec = x_rec.reshape(N, N)
 
-(boxes_iron, boxes_bis) = detect_bullets(im_rec, mu_iron, mu_bis, rel_error_iron, rel_error_bis, scale_im_to_mu_bis)
+rel_error_iron = 0.5
+rel_error_bis = 0.5
+im_scale = 1.25 * mu_bis / np.max(im_rec)
+
+(boxes_iron, boxes_bis) = detect_bullets(im_rec, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale)
 
 fig, ax = plt.subplots()
 ax.imshow(im_rec)
