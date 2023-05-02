@@ -375,23 +375,19 @@ print(conds)
 best_conds = {}
 rel_error_iron = 0.5
 rel_error_bis = 0.5
-scale_factor = 1.25
 
 i = 1
 fig = plt.figure(dpi=1200)
 for k, v in islice(conds.items(), 0, None):
     (_, degree, p, d) = k
-    theta = np.arange(0., 180., degree)
+    theta = np.arange(0., 180., degree) 
     im_rec = reconstruct_image(im, theta, p, d)
-    im_scale = scale_factor * mu_bis / np.max(im_rec)
+    im_scale = mu_bis / np.max(im_rec)
 
     (boxes_iron, boxes_bis) = detect_bullets(im_rec, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale)
-    print(k, v, (len(boxes_iron), len(boxes_bis)))
 
-    if len(boxes_iron) == 10 and len(boxes_bis) == 10:
-        print()
-        print(i, k, v, (len(boxes_iron), len(boxes_bis)))
-        print()
+    if 10 <= len(boxes_iron) <= 20 and len(boxes_bis) == 10:
+        print(i, k, v, (len(boxes_iron), len(boxes_bis)), im_scale)
         best_conds[k] = v
 
         ax = plt.subplot(4, 8, i)
@@ -458,7 +454,7 @@ im_rec = x_rec.reshape(N, N)
 
 rel_error_iron = 0.5
 rel_error_bis = 0.5
-im_scale = 1.25 * mu_bis / np.max(im_rec)
+im_scale = mu_bis / np.max(im_rec)
 
 (boxes_iron, boxes_bis) = detect_bullets(im_rec, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale)
 
