@@ -1,7 +1,6 @@
 # %% Load libraies and the given paralleltomo function
 import numpy as np
 import matplotlib.pyplot as plt
-from itertools import islice
 from matplotlib.patches import Rectangle
 from scipy.sparse import csr_matrix
 from skimage.transform import rescale
@@ -180,7 +179,8 @@ def reconstruct_image(im, theta=None, p=None, d=None, noise_scale=None):
     b = A @ x
 
     if noise_scale is not None:
-        b += noise_scale * np.random.poisson(b)
+        #b = np.random.poisson(noise_scale * b) / noise_scale
+        b += noise_scale * (b - np.random.poisson(b))
 
     x_rec = np.linalg.lstsq(A, b, rcond=None)[0]
     im_rec = x_rec.reshape(N, N)
@@ -222,7 +222,7 @@ def generate_image(r_log, r_bullets, mu_wood, mu_iron, mu_bis):
 
     return im[0:N, 0:N]
 
-def detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale=1):
+def detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale=1, filter_overlap_size=None):
     abs_error_iron = rel_error_iron * mu_iron
     abs_error_bis = rel_error_bis * mu_bis
 
@@ -235,10 +235,51 @@ def detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale=
         im <= (mu_bis + abs_error_bis) / im_scale
     )
 
-    n = im_mask_iron.shape[0]
+    n = im.shape[0]
     boxes_iron = []
     boxes_bis = []
 
+    for x in range(n):
+        for y in range(n):
+            if im_mask_bis[x, y]:
+                queue = []
+                xs = []
+                ys = []
+
+                queue.append((x,y))
+                xs.append(x)
+                ys.append(y)
+                im_mask_bis[x, y] = False
+
+                while len(queue) > 0:
+                    (x, y) = queue.pop()
+
+                    if x+1 < n and im_mask_bis[x+1, y]:
+                        queue.append((x+1,y))
+                        xs.append(x+1)
+                        ys.append(y)
+                        im_mask_bis[x+1, y] = False
+
+                    if y+1 < n and im_mask_bis[x, y+1]:
+                        queue.append((x,y+1))
+                        xs.append(x)
+                        ys.append(y+1)
+                        im_mask_bis[x, y+1] = False
+
+                    if x-1 >= 0 and im_mask_bis[x-1, y]:
+                        queue.append((x-1,y))
+                        xs.append(x-1)
+                        ys.append(y)
+                        im_mask_bis[x-1, y] = False
+
+                    if y-1 >= 0 and im_mask_bis[x, y-1]:
+                        queue.append((x,y-1))
+                        xs.append(x)
+                        ys.append(y-1)
+                        im_mask_bis[x, y-1] = False
+                
+                boxes_bis.append(((min(xs), min(ys)), (max(xs), max(ys)), len(xs)))
+    
     for x in range(n):
         for y in range(n):
             if im_mask_iron[x, y]:
@@ -277,54 +318,35 @@ def detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale=
                         xs.append(x)
                         ys.append(y-1)
                         im_mask_iron[x, y-1] = False
+
+
+                x1_iron = min(xs)
+                y1_iron = min(ys)
+                x2_iron = max(xs)
+                y2_iron = max(ys)
                 
-                boxes_iron.append(((min(xs), min(ys)), (max(xs), max(ys)), len(xs)))
-            
-            if im_mask_bis[x, y]:
-                queue = []
-                xs = []
-                ys = []
+                if filter_overlap_size is not None:
+                    overlap = False
+                    for ((x1_bis, y1_bis), (x2_bis, y2_bis), _) in boxes_bis:
+                        if not (x1_iron - filter_overlap_size > x2_bis or 
+                            x2_iron + filter_overlap_size < x1_bis or 
+                            y1_iron - filter_overlap_size > y2_bis or 
+                            y2_iron + filter_overlap_size < y1_bis
+                        ): 
+                            overlap = True
+                    if not overlap:
+                        boxes_iron.append(((x1_iron, y1_iron), (x2_iron, y2_iron), len(xs)))
+                else:
+                    boxes_iron.append(((x1_iron, y1_iron), (x2_iron, y2_iron), len(xs)))
 
-                queue.append((x,y))
-                xs.append(x)
-                ys.append(y)
-                im_mask_bis[x, y] = False
-
-                while queue:
-                    (x, y) = queue.pop()
-
-                    if x+1 < n and im_mask_bis[x+1, y]:
-                        queue.append((x+1,y))
-                        xs.append(x+1)
-                        ys.append(y)
-                        im_mask_bis[x+1, y] = False
-
-                    if y+1 < n and im_mask_bis[x, y+1]:
-                        queue.append((x,y+1))
-                        xs.append(x)
-                        ys.append(y+1)
-                        im_mask_bis[x, y+1] = False
-
-                    if x-1 >= 0 and im_mask_bis[x-1, y]:
-                        queue.append((x-1,y))
-                        xs.append(x-1)
-                        ys.append(y)
-                        im_mask_bis[x-1, y] = False
-
-                    if y-1 >= 0 and im_mask_bis[x, y-1]:
-                        queue.append((x,y-1))
-                        xs.append(x)
-                        ys.append(y-1)
-                        im_mask_bis[x, y-1] = False
-                
-                boxes_bis.append(((min(xs), min(ys)), (max(xs), max(ys)), len(xs)))
-    
     return (boxes_iron, boxes_bis)
 
 # %% Generate image
+frac = 5 * 5
+
 mu_wood = 1.220
-mu_iron = 449.45
-mu_bis = 1265.54
+mu_iron = 1/frac * 449.45 + (frac - 1)/frac * mu_wood
+mu_bis = 1/frac * 1265.54 + (frac - 1)/frac * mu_wood
 
 radius_log = 25
 radius_bullet = [0] * 10
@@ -334,7 +356,7 @@ plt.imshow(im)
 
 # %% Detect bullets
 rel_error_iron = 0.5
-rel_error_bis = 0.5
+rel_error_bis = 0.25
 
 (boxes_iron, boxes_bis) = detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis)
 
@@ -364,8 +386,10 @@ for degree in range(1, 10+1, 1):
                 (A, _, _, _) = paralleltomo(N, theta, p, d)
                 cond = np.linalg.cond(A)
                 print(cond)
-                conds[(N, degree, p, d)] = cond
+                if cond != np.inf:
+                    conds[(N, degree, p, d)] = cond
             except:
+                print("crashed")
                 continue
 
 conds = dict(sorted(conds.items(), key=lambda item: item[1]))
@@ -373,20 +397,20 @@ print(conds)
 
 # %% Find best parameters for bullect detection
 best_conds = {}
-rel_error_iron = 0.5
+rel_error_iron = 0.25
 rel_error_bis = 0.5
 
 i = 1
 fig = plt.figure(dpi=1200)
-for k, v in islice(conds.items(), 0, None):
+for k, v in conds.items():
     (_, degree, p, d) = k
     theta = np.arange(0., 180., degree) 
     im_rec = reconstruct_image(im, theta, p, d)
     im_scale = mu_bis / np.max(im_rec)
 
-    (boxes_iron, boxes_bis) = detect_bullets(im_rec, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale)
+    (boxes_iron, boxes_bis) = detect_bullets(im_rec, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale, 1)
 
-    if 10 <= len(boxes_iron) <= 20 and len(boxes_bis) == 10:
+    if 10 == len(boxes_iron) and len(boxes_bis) == 10:
         print(i, k, v, (len(boxes_iron), len(boxes_bis)), im_scale)
         best_conds[k] = v
 
@@ -409,66 +433,49 @@ for k, v in islice(conds.items(), 0, None):
 print(best_conds)
 plt.show()
 
-# %% Generate full size image
-mu_wood = 1.220
-mu_iron = 449.45
-mu_bis = 1265.54
-
-radius_log = 25 * 5
-radius_bullet = [0] * 10
-
-im = generate_image(radius_log, radius_bullet, mu_wood, mu_iron, mu_bis)
-
-rel_error_iron = 0.5
-rel_error_bis = 0.5
-
-(boxes_iron, boxes_bis) = detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis)
-
-fig, ax = plt.subplots()
-ax.imshow(im)
-
-for ((x1,y1), (x2,y2), n) in boxes_iron:
-    ax.add_patch(Rectangle((y1-1, x1-1), y2-y1+2, x2-x1+2, linewidth=1, edgecolor='white', facecolor='none'))
-
-for ((x1,y1), (x2,y2), n) in boxes_bis:
-    ax.add_patch(Rectangle((y1-1, x1-1), y2-y1+2, x2-x1+2, linewidth=1, edgecolor='red', facecolor='none'))
-
-print(len(boxes_iron), len(boxes_bis))
-plt.show()
-
-# %% Reconstruct with best parameters and detect bullets
+# %% Reconstruct image with noise
 degree = 4
-p = 35 * 5
-d = 40 * 5
+p = 40
+d = 45
+noise_scale = 0.2
 theta = np.arange(0., 180., degree)
 
-N = im.shape[0]
-x = im.flatten()
-(A, _, _, _) = paralleltomo(N, np.matrix(theta), p, d)
-b = A @ x
+frac = 10 * 10
+mu_wood = 1.220
+mu_iron = 1/frac * 449.45 + (frac - 1)/frac * mu_wood
+mu_bis = 1/frac * 1265.54 + (frac - 1)/frac * mu_wood
 
-print(np.linalg.cond(A))
+radius_log = 25
+radius_bullet = [0] * 10
 
-x_rec = np.linalg.lstsq(A, b, rcond=None)[0]
-im_rec = x_rec.reshape(N, N)
-
-rel_error_iron = 0.5
+rel_error_iron = 0.25
 rel_error_bis = 0.5
-im_scale = mu_bis / np.max(im_rec)
 
-(boxes_iron, boxes_bis) = detect_bullets(im_rec, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale)
+for i in range(10):
+    fig, ax = plt.subplots()
 
-fig, ax = plt.subplots()
-ax.imshow(im_rec)
+    im = generate_image(radius_log, radius_bullet, mu_wood, mu_iron, mu_bis)
+    (boxes_iron, boxes_bis) = detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis)
+    ax = plt.subplot(1, 2, 1)
+    ax.imshow(im)
+    for ((x1,y1), (x2,y2), n) in boxes_iron:
+        ax.add_patch(Rectangle((y1-1, x1-1), y2-y1+2, x2-x1+2, linewidth=1, edgecolor='white', facecolor='none'))
+    for ((x1,y1), (x2,y2), n) in boxes_bis:
+        ax.add_patch(Rectangle((y1-1, x1-1), y2-y1+2, x2-x1+2, linewidth=1, edgecolor='red', facecolor='none'))
 
-for ((x1,y1), (x2,y2), n) in boxes_iron:
-    ax.add_patch(Rectangle((y1-1, x1-1), y2-y1+2, x2-x1+2, linewidth=1, edgecolor='white', facecolor='none'))
+    im_rec = reconstruct_image(im, theta, p, d, noise_scale)
+    print(np.max(im_rec), np.max(im))
+    im_scale = mu_bis / np.max(im_rec)
+    (boxes_iron_rec, boxes_bis_rec) = detect_bullets(im_rec, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale)
+    ax = plt.subplot(1, 2, 2)
+    ax.imshow(im_rec)
+    for ((x1,y1), (x2,y2), n) in boxes_iron_rec:
+        ax.add_patch(Rectangle((y1-1, x1-1), y2-y1+2, x2-x1+2, linewidth=1, edgecolor='white', facecolor='none'))
+    for ((x1,y1), (x2,y2), n) in boxes_bis_rec:
+        ax.add_patch(Rectangle((y1-1, x1-1), y2-y1+2, x2-x1+2, linewidth=1, edgecolor='red', facecolor='none'))
 
-for ((x1,y1), (x2,y2), n) in boxes_bis:
-    ax.add_patch(Rectangle((y1-1, x1-1), y2-y1+2, x2-x1+2, linewidth=1, edgecolor='red', facecolor='none'))
-
-print(len(boxes_iron), len(boxes_bis))
-plt.show()
+    print((len(boxes_iron), len(boxes_bis)), (len(boxes_iron_rec), len(boxes_bis_rec)))
+    plt.show()
 
 
 # %%
