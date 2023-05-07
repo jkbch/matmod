@@ -1,3 +1,4 @@
+i (N, degree, p, d) cond (hit_iron, hit_bis) im_scale
 
 Iteration 1
 1 (50, 7, 25, 35) 11.597626427460375 (10, 10) 2.5100271478762988 bad

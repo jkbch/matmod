@@ -5,17 +5,16 @@ from matplotlib.patches import Rectangle
 from scipy.sparse import csr_matrix
 from skimage.transform import rescale
 from skimage.morphology import disk
-from skimage.util import random_noise
 from condition_numbers import conds
 
 def paralleltomo(N, theta=None, p=None, d=None):
     """
     PARALLELTOMO Creates a 2D tomography system matrix using parallel beams
     
-      [A,theta,p,d] = paralleltomo(N)
-      [A,theta,p,d] = paralleltomo(N,theta)
-      [A,theta,p,d] = paralleltomo(N,theta,p)
-      [A,theta,p,d] = paralleltomo(N,theta,p,d)
+      (A,theta,p,d) = paralleltomo(N)
+      (A,theta,p,d) = paralleltomo(N,theta)
+      (A,theta,p,df = paralleltomo(N,theta,p)
+      (A,theta,p,d) = paralleltomo(N,theta,p,d)
     
     This function creates a 2D tomography test problem with an N-times-N
     domain, using p parallel rays for each angle in the vector theta.
@@ -348,7 +347,7 @@ def detect_bullets(im, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale=
     return (boxes_iron, boxes_bis)
 
 # %% Generate image
-frac = 5 * 5
+frac = 10 * 10
 
 mu_wood = 1.220
 mu_iron = 1/frac * 449.45 + (frac - 1)/frac * mu_wood
