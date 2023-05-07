@@ -5,7 +5,8 @@ from matplotlib.patches import Rectangle
 from scipy.sparse import csr_matrix
 from skimage.transform import rescale
 from skimage.morphology import disk
-from condition_numbers import best_conds, conds
+from skimage.util import random_noise
+from condition_numbers import conds
 
 def paralleltomo(N, theta=None, p=None, d=None):
     """
@@ -172,15 +173,17 @@ def paralleltomo(N, theta=None, p=None, d=None):
 
     return (A, theta, p, d)
 
-def reconstruct_image(im, theta=None, p=None, d=None, noise_scale=None):
+def reconstruct_image(im, theta=None, p=None, d=None, add_possion_noise=False):
     N = im.shape[0]
     x = im.flatten()
     (A, _, _, _) = paralleltomo(N, np.matrix(theta), p, d)
     b = A @ x
 
-    if noise_scale is not None:
-        #b = np.random.poisson(noise_scale * b) / noise_scale
-        b += noise_scale * (b - np.random.poisson(b))
+    if add_possion_noise:
+        vals = len(np.unique(b))
+        vals = 2 ** np.ceil(np.log2(vals))
+        b = np.random.poisson(b * vals) / float(vals)
+        #b = random_noise(b, mode='poisson')
 
     x_rec = np.linalg.lstsq(A, b, rcond=None)[0]
     im_rec = x_rec.reshape(N, N)
@@ -437,7 +440,7 @@ plt.show()
 degree = 4
 p = 40
 d = 45
-noise_scale = 0.2
+add_poisson_noise = True
 theta = np.arange(0., 180., degree)
 
 frac = 10 * 10
@@ -463,7 +466,7 @@ for i in range(10):
     for ((x1,y1), (x2,y2), n) in boxes_bis:
         ax.add_patch(Rectangle((y1-1, x1-1), y2-y1+2, x2-x1+2, linewidth=1, edgecolor='red', facecolor='none'))
 
-    im_rec = reconstruct_image(im, theta, p, d, noise_scale)
+    im_rec = reconstruct_image(im, theta, p, d, add_poisson_noise)
     print(np.max(im_rec), np.max(im))
     im_scale = mu_bis / np.max(im_rec)
     (boxes_iron_rec, boxes_bis_rec) = detect_bullets(im_rec, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale)
