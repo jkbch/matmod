@@ -473,7 +473,7 @@ for i in range(10):
 
     im_rec = reconstruct_image(im, theta, p, d, add_poisson_noise, add_gaussian_noise, gaussian_sd)
     im_scale = mu_bis / np.max(im_rec)
-    (boxes_iron_rec, boxes_bis_rec) = detect_bullets(im_rec, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale)
+    (boxes_iron_rec, boxes_bis_rec) =    detect_bullets(im_rec, mu_iron, mu_bis, rel_error_iron, rel_error_bis, im_scale)
     ax = plt.subplot(1, 2, 2)
     ax.imshow(im_rec)
     for ((x1,y1), (x2,y2), n) in boxes_iron_rec:

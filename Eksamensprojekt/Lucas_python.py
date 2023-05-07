@@ -225,9 +225,9 @@ plt.colorbar()
 # %% Find projections b
 N = im_downscaled.shape[0]
 x = im_downscaled.flatten()
-[A, theta, p, d] = paralleltomo(N, np.matrix(np.arange(0.,180.,3.)))
+[A, theta, p, d] = paralleltomo(N, np.matrix(np.arange(0.,180.,1.)))
 b = A @ x
-
+print(np.max(b))
 # %% Reconstruct image
 x_reconstructed = np.linalg.lstsq(A, b, rcond=None)[0]
 im_reconstructed = x_reconstructed.reshape(N, N)
@@ -307,4 +307,6 @@ print(mini, maxi)
 
 #%%
 print(findNoisyPixels('bismuth',b, 2))
+# %%
+np.max(b)
 # %%

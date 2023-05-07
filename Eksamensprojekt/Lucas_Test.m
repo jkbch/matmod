@@ -15,7 +15,6 @@ imshow(im_down * 200)
 axis on
 vec = 0:1:180;
 [A,b,x, theta, p, d] = paralleltomo(5000 / factor,vec,[],[],0);
-b
 
 %%
 b = A * reshape(im_down,[],1);
@@ -46,4 +45,10 @@ figure(2)
 imagesc(reshape(X_TestImage,5000 / factor, 5000 / factor)*10)
 
 %% 
-
+clear all
+close all
+clc
+N = 250;
+vec = 0:3:180;
+p = round(sqrt(2)*N);
+[A,b,x, theta, p, d] = paralleltomo(N,vec,p,[],0);
